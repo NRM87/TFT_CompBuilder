@@ -1,6 +1,6 @@
 TFT_CompBuilder
-#Teamfight Tactics Team Composition Generator
-###Premise
+# Teamfight Tactics Team Composition Generator
+### Premise
 
 
 
