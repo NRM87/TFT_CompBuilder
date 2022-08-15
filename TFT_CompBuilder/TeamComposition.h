@@ -1,0 +1,88 @@
+#pragma once
+#include <vector>
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
+#include "Champion.h"
+using namespace std;
+
+//TeamCompositions are essentially sets of Champions with infrastructure to keep track of stats relevant to the Teamfight Tactics game.
+//Internally, the set is a 64bit long-long where each bit corresponds to a different champion, determined in initalizeStatics. 
+//Because of this, static fields which help enforce the corresponding bit positions and champions should be first initialized before comp objects can be used.
+//Teamfight Tactics usually does not have more than 64 champions, hence the use of long-long for the bits.
+class TeamComposition {
+public:
+	//Constructor, only works once static fields have been initialized in initializeStatics
+	TeamComposition() : compSize(0), champions(0LL), connectedChamps(0LL)
+	{
+		if (!initialized) throw runtime_error("TeamComposition statics not initialized.");
+		for (int i = 0; i < currentSetTraits.size(); ++i) {
+			compTraits[i] = 0;
+		}
+	}
+
+	//Accessors
+	short size() const { return compSize; }; 
+	int getActiveTraitTiersTotal() const; 
+	int getActiveTraitsTotal() const; 
+	string toString() const; 
+
+	//Mutators
+	bool addChamp(string champ); //adds a champ to the comp and updates relavant trait and connections fields
+	
+	//Operators
+	bool operator==(const TeamComposition& left) const { return this->champions == left.champions; };
+
+	//Static accessors
+	static vector<TeamComposition> generateComps(int compSize, bool traitSettings[3]); //returns a list of comps based on a target comp size and settings
+	static vector<TeamComposition> generateComps(int compSize); //calls default settings of generateComps
+	static unordered_map<string, vector<string>> getChampGraph() { return championGraph; }; 
+
+	//Static mutators
+	//Initializes the static variables based on a trait-traitMilestone map and a name-Champion map
+	static void initializeStatics(unordered_map<string, vector<int>> traitData, unordered_map<string, Champion> champInfo); 
+private: 
+	//Hash function for TeamCompositionLite objects, uses internal long-long champions for the hash.
+	struct teamCompHash {
+		size_t operator()(const TeamComposition& comp) const {
+			long long champs = comp.champions;
+			return hash<long long>()(champs);
+		}
+	};
+
+	//Object fields
+	//There shouldn't be more than 32 traits, and values for compSize and any compTraits[n] should never exceed 128 based on typical Teamfight Tactics numbers
+	short compSize; //total width of champions in the comp
+	short compTraits[32]; //each trait and its active amount for the comp
+	long long champions; //64bit set of champions in the comp
+	long long connectedChamps; //64bit set of champions not already in the comp that share traits with any of the champions in the comp
+
+	static bool initialized; //keeps track of if static fields have been properly initialized
+	static const int MAX_COMP_SIZE = 9; //maximum comp size for generateComps algorithm
+
+	//gates for pruning incremental sizes of comps during generateComps algorithm
+	static const int ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE]; 
+	static const int ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE];
+
+	//Sets of champions that have a certain trait. In 64bit form to easily operate with comp objects.
+	static long long dragons; 
+	static long long scalescorns;
+
+	//Static fields for champion and trait information.
+	static unordered_map<string, Champion> globalChampInfoMap; //map of champ name to Champion object
+	static unordered_map<string, vector<string>> championGraph; //map of champ to set of champs sharing a trait
+	static unordered_map<string, long long> championLLGraph; //map of champ to 64bit set of champs sharing a trait
+	static unordered_map<string, vector<int>> currentSetTraits; //map of traits to their trait milestones
+
+	//Static fields for converting trait or champion strings to their corresponding positions in arrays or 64bit sets, respectively
+	static unordered_map<string, int> champStringToBitPosMap;
+	static string champBitPosToStringMap[];
+	static unordered_map<string, short> traitStringToArrPosMap;
+	static string traitArrPosToStringMap[];
+
+	/* OLD COMP-GENERATING ALGORITHM FUNCTIONS
+	static vector<TeamCompositionLite> getTeamCompList(int compSize); 
+	static void addTeamComps(unordered_set<TeamCompositionLite, teamCompLiteHash>& compList, TeamCompositionLite currentComp, string champ, int numChampsLeft);
+	*/
+};

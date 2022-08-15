@@ -1,0 +1,28 @@
+Assassin 2 4 6
+Astral 3 6 9
+Bard 1
+Bruiser 2 4 6 8
+Cannoneer 2 3 4 5
+Cavalier 2 3 4 5 
+Dragon 1
+Dragonmancer 3 6 9
+Evoker 2 4 6
+Guardian 2 4 6
+Guild 1 2 3 4 5 6
+Jade 3 6 9
+Legend 3
+Mage 3 5 7 9
+Mirage 2 4 6 9
+Mystic 2 3 4 5
+Ragewing 3 6 9
+Revel 2 3 4 5
+Scalescorn 2 4 6
+Shapeshifter 2 4 6
+Shimmerscale 3 5 7 9
+Spellthief 1
+Starcaller 1
+Swiftshot 2 4 6
+Tempest 2 4 6 8
+Trainer 2 3
+Warrior 2 4 6
+Whispers 2 4 6 8
