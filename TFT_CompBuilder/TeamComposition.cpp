@@ -6,6 +6,7 @@ using namespace std;
 //Construct static fields:
 //Gates determine how many traits or trait tiers (depending on settings) a comp needs at each size during their building in generateComps
 //For runtime efficiency, gates eliminate generated comps that do not have enough traits or tiers to reach the target amount of the last gate of the target size.
+//The values of the gates were determined experimentally, with them being the max value that will still ensure all comps of the last gate size will make it to the end.
 const int TeamComposition::ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitsTotal
 	{2,0,0,0,0,0,0,0,0},
 	{2,3,0,0,0,0,0,0,0},
