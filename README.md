@@ -14,7 +14,7 @@ TFT_CompBuilder
 
 ## Terminology
  - Teamfight Tactics (TFT) - The name of the game where you build team compositions with champions and their traits.
- - Set - The current rotation of champions and traits available in Teamfight Tactics. This comp-builder program is based on TFT's 7th Set. To not be confused with the data structure, this Set is referred to with capital S in code comments.
+ - Set - The current rotation of champions and traits available in Teamfight Tactics. This comp-builder program is currently configured to TFT's 7th Set. To not be confused with the data structure, this Set is referred to with capital S in code comments.
  - Team Composition (comp) - A set of champions. Typically a comp will not have more than 9 slots for champions, and this program is based around that. 
  - Champion (champ) - A character in the game that has traits and takes up space in a comp, typically only 1 slot but sometimes 2.
  - Trait - A characteristic of a champion. Team compositions have amounts of traits equal to the traits' totals across the champions in the team composition. A team composition passes a trait milestone once it has enough of the trait to reach the number indicated on the milestone.
