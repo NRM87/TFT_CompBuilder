@@ -1,0 +1,59 @@
+Sylas Anima_Squad Renegade
+Nasus Anima_Squad Mascot
+Jinx Anima_Squad Prankster
+Vayne Anima_Squad Recon Duelist
+Riven Anima_Squad Brawler Defender
+Miss_Fortune Anima_Squad Ace
+Galio Civilian Mascot
+Sivir Civilian Sureshot
+Janna Civilian Spellslinger Forecaster
+Taliyah Star_Guardian Spellslinger
+Lux Star_Guardian Spellslinger
+Nilah Star_Guardian Duelist
+Kai'Sa Star_Guardian Recon
+Rell Star_Guardian Defender
+Ekko Star_Guardian Prankster Aegis
+Syndra Star_Guardian Heart
+Sett Mecha:PRIME Defender
+Draven Mecha:PRIME Ace
+Leona Mecha:PRIME Renegade Aegis
+Jax Mecha:PRIME Brawler
+Sejuani LaserCorps Brawler
+Ashe LaserCorps Recon
+Senna LaserCorps Sureshot
+Zed LaserCorps Duelist Hacker
+Mordekaiser LaserCorps Ace
+Annie Gadgeteen Ox_Force Spellslinger
+Fiora Ox_Force Duelist
+Alistar Ox_Force Mascot Aegis
+Aphelios Ox_Force Sureshot Arsenal
+Viego Ox_Force Renegade
+Kayle Underground Duelist
+Vi Underground Brawler Aegis
+Samira Underground Sureshot Ace
+Sona Underground Spellslinger Heart
+Lulu Gadgeteen Heart
+Zoe Gadgeteen Prankster Hacker
+Nunu_&_Willump Gadgeteen Mascot
+Blitzcrank A.D.M.I.N. Brawler
+Camille A.D.M.I.N. Renegade
+Gangplank Supers Duelist
+Lee_Sin Supers Heart Brawler
+Malphite Supers Mascot
+Vel'Koz Threat
+Cho'Gath Threat
+Aurelion_Sol Threat
+Rammus Threat
+Bel'Veth Threat
+Zac Threat
+Urgot Threat
+Fiddlesticks Corrupted Threat
+Yuumi Star_Guardian Mascot Heart
+Yasuo LaserCorps Duelist
+Poppy Gadgeteen Defender
+Talon Ox_Force Renegade
+Renekton LaserCorps Brawler
+Wukong Mecha:PRIME Defender
+Ezreal Underground Recon
+Soraka A.D.M.I.N. Heart
+LeBlanc A.D.M.I.N. Spellslinger Hacker

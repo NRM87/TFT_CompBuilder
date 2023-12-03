@@ -1,0 +1,28 @@
+A.D.M.I.N. 2 4 6
+Anima_Squad 3 5 7
+Gadgeteen 3 5
+Infiniteam 3 5 7
+LaserCorps 3 4 5 6
+Mecha:PRIME 3 5
+Ox_Force 2 4 6
+Riftwalker 3
+Star_Guardian 2 4 6 8
+Supers 3
+Threat 1
+Underground 3 4 5 6
+Ace 1 4
+Aegis 2 3 4 5
+Brawler 2 4 6 8
+Corrupted 1
+Defender 2 4 6
+Duelist 2 4 6 8
+Forecaster 1
+Hacker 2 3 4 5
+Heart 2 4 6
+Mascot 2 4 6
+Parallel 2
+Prankster 2 3 4
+Quickdraw 2 3 4
+Renegade 3 5 7
+Spellslinger 2 4 6 8
+Sureshot 2 3 4 5

@@ -1,0 +1,27 @@
+Civilian 1 2 3
+A.D.M.I.N. 2 4 6
+Anima_Squad 3 5 7
+LaserCorps 3 6 9
+Brawler 2 4 6 8
+Mecha:PRIME 3 5
+Threat 1
+Mascot 2 4 6 8
+Forecaster 1
+Ace 1 4
+Duelist 2 4 6 8
+Ox_Force 2 4 6 8
+Arsenal 1
+Aegis 2 3 4 5
+Underground 3 5
+Star_Guardian 3 5 7 9
+Prankster 2 3
+Heart 2 4 6
+Corrupted 1
+Supers 3
+Renegade 3 6
+Spellslinger 2 4 6 8
+Recon 2 3 4
+Sureshot 2 4
+Defender 2 4 6
+Gadgeteen 3 5
+Hacker 2 3 4

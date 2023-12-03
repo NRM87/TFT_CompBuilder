@@ -1,4 +1,7 @@
 #include "Champion.h"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 using namespace std;
 
 //Constructor for the typical three trait set-up of most champions in Teamfight Tactics
@@ -28,9 +31,11 @@ void Champion::addTrait(string trait, int traitValue) {
 
 //Returns a string representation of the champion and its traits.
 string Champion::toString() const {
-	string s = this->name + ": ";
+	ostringstream stream;
+	stream << left << setw(16) << (this->name + ": ");
 	for (map<string, int>::const_iterator it = traits.begin(); it != traits.end(); ++it) {
-		s += (it->first + "(" + std::to_string(it->second) + ") ");
+		stream << (it->first + "(" + std::to_string(it->second) + ") ");
 	}
+	string s = stream.str();
 	return s;
 }

@@ -9,14 +9,14 @@ using namespace std;
 //The values of the gates were determined experimentally, with them being the max value that will still ensure all comps of the last gate size will make it to the end.
 const int TeamComposition::ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitsTotal
 	{2,0,0,0,0,0,0,0,0},
-	{2,3,0,0,0,0,0,0,0},
-	{2,3,5,0,0,0,0,0,0},
-	{2,3,5,6,0,0,0,0,0},
+	{2,4,0,0,0,0,0,0,0},
+	{2,4,5,0,0,0,0,0,0},
+	{2,3,5,7,0,0,0,0,0},
 	{2,3,4,5,7,0,0,0,0},
 	{2,3,4,5,6,8,0,0,0},
 	{2,3,3,4,6,7,9,0,0},
 	{1,2,3,4,5,7,8,10,0},
-	{1,2,3,4,5,6,8,9,11} };
+	{2,3,4,5,6,7,9,10,12} };
 const int TeamComposition::ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitTiersTotal
 	{2,0,0,0,0,0,0,0,0},
 	{2,3,0,0,0,0,0,0,0},
@@ -112,7 +112,7 @@ bool TeamComposition::addChamp(string champ) {
 //settings[] guide: settings[0] - use gates or not; settings[1] - use trait or tier gates; settings[2] - use all champs or only connectedChamps
 //Example settings: Default - {0,0,0} | All possible comps - {1,0,0} | Use tier gates, not trait gates - {0,1,0}
 vector<TeamComposition> TeamComposition::generateComps(int compSize, bool settings[3]) {
-	if (compSize > 9 || compSize < 1) throw runtime_error("generateBestComps9 must have parameter compSize between 1 and 9 (inclusive).");
+	if (compSize > 9 || compSize < 1) throw runtime_error("generateComps must have parameter compSize between 1 and 9 (inclusive).");
 
 	//Pick what gates to use based on settings[1]
 	const int(*GATES)[9][9];
@@ -146,14 +146,22 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, bool settin
 					TeamComposition nextComp(currComp);
 					nextComp.addChamp(champ);
 
+					//Set 7 conditions
 					long long nextCompDragons = (dragons & nextComp.champions);
 					bool hasAtMostOneDragon = !((nextCompDragons & (nextCompDragons - 1)) && nextCompDragons);
 					bool hasDragonAndScalescorn = (dragons & nextComp.champions) && (scalescorns & nextComp.champions);
 					bool hasSufficientTraits = true;
+
+					//Set 8 conditions
+						//TODO: Threat trait conditions
+
+					
 					if (!settings[0]) {
 						int traitValue = (settings[1] ? nextComp.getActiveTraitTiersTotal() : nextComp.getActiveTraitsTotal());
 						hasSufficientTraits = (traitValue >= (*GATES)[compSize - 1][nextComp.compSize - 1]);
 					}
+
+					//TODO figure out these reqs and apply it for Threat
 					if (!hasSufficientTraits || !hasAtMostOneDragon || hasDragonAndScalescorn) continue;
 
 					//If the generated comp passes the above if-statement, send it to the next round of building and pruning.
@@ -229,8 +237,8 @@ void TeamComposition::initializeStatics(unordered_map<string, vector<int>> trait
 				//Last two nested loops compare each trait between keyChamp and otherChamp
 				for (const pair<string, int>& keyChampTrait : keyChamp.second.getTraitMap()) {
 					for (const pair<string, int>& otherChampTrait : otherChamp.second.getTraitMap()) {
-						//if trait names match, otherChamp's name is added to the list of keyChamp's connected champs. (*Dragons must not connect to eachother)
-						if (keyChampTrait.first == otherChampTrait.first && keyChampTrait.first != "Dragon") {
+						//if trait names match, otherChamp's name is added to the list of keyChamp's connected champs. (Threats must not connect to eachother)
+						if (keyChampTrait.first == otherChampTrait.first && keyChampTrait.first != "Threat") {
 							connectedChamps.push_back(otherChamp.first); 
 							goto nextChampComparison; //once champs are found to share a trait, skip comparing other traits
 						}

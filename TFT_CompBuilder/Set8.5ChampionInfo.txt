@@ -1,0 +1,59 @@
+Sylas Anima_Squad Renegade
+Nasus Anima_Squad Mascot
+Jinx Anima_Squad Prankster
+Vayne Anima_Squad Duelist
+Riven Anima_Squad Brawler Defender
+Miss_Fortune Anima_Squad Ace Quickdraw
+Janna Spellslinger Forecaster
+Lux Star_Guardian Spellslinger
+Nilah Star_Guardian Duelist
+Kai'Sa Star_Guardian Quickdraw
+Rell Star_Guardian Defender
+Ekko Star_Guardian Prankster Aegis
+Syndra Star_Guardian Heart
+Draven Mecha:PRIME Ace
+Leona Mecha:PRIME Renegade Aegis
+Jax Mecha:PRIME Brawler
+Ashe LaserCorps Sureshot
+Mordekaiser LaserCorps Ace
+Annie Gadgeteen Ox_Force Spellslinger
+Fiora Ox_Force Duelist
+Alistar Ox_Force Mascot Aegis
+Viego Ox_Force Renegade Heart
+Kayle Underground Duelist
+Vi Underground Brawler Aegis
+Samira Underground Sureshot Ace
+Sona Underground Spellslinger Heart
+Lulu Gadgeteen Heart
+Nunu_&_Willump Gadgeteen Mascot
+Blitzcrank A.D.M.I.N. Brawler
+Camille A.D.M.I.N. Renegade
+Gangplank Supers Duelist
+Lee_Sin Supers Heart Brawler
+Malphite Supers Mascot
+Aurelion_Sol Threat
+Rammus Threat
+Bel'Veth Threat
+Urgot Threat
+Fiddlesticks Corrupted Threat
+Yasuo LaserCorps Duelist
+Poppy Gadgeteen Defender
+Renekton LaserCorps Brawler
+Wukong Mecha:PRIME Defender
+Ezreal1 Underground Parallel Quickdraw
+Ezreal2 Infiniteam Parallel Sureshot
+LeBlanc A.D.M.I.N. Spellslinger Hacker
+Aatrox Threat
+Garen Mecha:PRIME Defender
+Gnar Gadgeteen Prankster
+Jhin Riftwalker Renegade
+Lucian Infiniteam Quickdraw Renegade
+Morgana Threat
+Neeko Star_Guardian Spellslinger
+Pantheon Infiniteam Heart
+Pyke Riftwalker Hacker
+Shen Infiniteam Defender Hacker
+Sivir Sureshot Infiniteam
+Twisted_Fate Infiniteam Duelist Spellslinger
+Vex Riftwalker Mascot
+Warwick A.D.M.I.N. LaserCorps Brawler

@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Legacy Infos">
+      <UniqueIdentifier>{e12f1337-4b51-4b16-af0c-e35cb607b2d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\TFTSetJSONs">
+      <UniqueIdentifier>{e0a6f0f9-87c1-4b11-b007-ebbfded66acc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AppSource.cpp">
@@ -38,6 +44,12 @@
     <ClInclude Include="TeamComposition.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Set7ChampionInfo.txt">
@@ -46,5 +58,36 @@
     <Text Include="Set7TraitInfo.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="Set8TraitInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set8ChampionInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="LegacySet7ChampionInfo.txt">
+      <Filter>Source Files\Legacy Infos</Filter>
+    </Text>
+    <Text Include="LegacySet7TraitInfo.txt">
+      <Filter>Source Files\Legacy Infos</Filter>
+    </Text>
+    <Text Include="SourceInput.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set8.5ChampionInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set8.5TraitInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TFTSetsInfo\set8.json">
+      <Filter>Source Files\TFTSetJSONs</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TFT_CompBuilder.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

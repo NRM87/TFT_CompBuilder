@@ -146,12 +146,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Champion.h" />
+    <ClInclude Include="json.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="TeamComposition.h" />
     <ClInclude Include="HelperFunctions.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Set7ChampionInfo.txt" />
     <Text Include="Set7TraitInfo.txt" />
+    <Text Include="Set8.5ChampionInfo.txt" />
+    <Text Include="Set8.5TraitInfo.txt" />
+    <Text Include="Set8ChampionInfo.txt" />
+    <Text Include="Set8TraitInfo.txt" />
+    <Text Include="LegacySet7ChampionInfo.txt" />
+    <Text Include="LegacySet7TraitInfo.txt" />
+    <Text Include="SourceInput.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TFTSetsInfo\set8.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TFT_CompBuilder.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
