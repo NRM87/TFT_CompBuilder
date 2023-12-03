@@ -13,7 +13,7 @@
 #include "TeamComposition.h"
 using namespace std;
 
-#define SET "8.5"
+#define SET "10"
 #define CDRAGONJSON(set) ("TFTSetJSONs\\set" + set + ".json")
 #define LEGACYGUARD (stoi(SET) >= 8 && SET != "8.5")
 #define CHAMPINFOFILE(set) ("Set" + set + "ChampionInfo.txt")
@@ -85,7 +85,7 @@ int main() {
 	}
 
 	//calculate new trait gates for algorithm (opitional)
-	cout << endl << "Do you want to update algorithm trait gates?" << endl;
+	//cout << endl << "Do you want to update algorithm trait gates?" << endl;
 	//TODO: implement automatic trait gate updating
 
 
@@ -117,7 +117,7 @@ int main() {
 	cout << endl << "Generated " << listToPrint.size() << " team compositions of size " << compositionSize << ": " << endl;
 	count = 1;
 	for (const TeamComposition& comp : listToPrint) {
-		cout << setw(2) << count << ":" << comp.toString() << endl;
+		cout << setw(2) << count << ":" << comp.toString() << " | Num traits: " << comp.getActiveTraitTiersTotal() << endl;
 		count++;
 	}
 	cout << "Total comps: " << listToPrint.size() << endl;

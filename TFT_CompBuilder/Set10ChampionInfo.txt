@@ -1,0 +1,60 @@
+Ahri K/DA Spellweaver
+Akali1 K/DA Executioner
+Amumu Emo Guardian
+Annie Emo Spellweaver
+Aphelios Heartsteel Rapidfire
+Bard Jazz Dazzler
+Blitzcrank Disco Sentinel
+Caitlyn 8-bit Rapidfire
+Corki 8-bit Big_Shot
+Ekko True_Damage Spellweaver Sentinel
+Evelynn K/DA Crowd_Diver
+Ezreal Heartsteel Big_Shot
+Gnar Pentakill Superfan Mosher
+Gragas Disco Spellweaver Bruiser
+Illaoi Bruiser
+Jax EDM Mosher
+Jhin Big_Shot
+Jinx Punk Rapidfire
+Karthus Pentakill Executioner
+Katarina Country Crowd_Diver
+Kayle Pentakill Edgelord
+Kayn Heartsteel Edgelord
+Kennen True_Damage Superfan Guardian
+Lillia K/DA Superfan Sentinel
+Lucian Jazz Rapidfire
+Lulu Hyperpop Spellweaver
+Lux EDM Dazzler
+Mordekaiser Pentakill Sentinel
+Nami Disco Dazzler
+Neeko K/DA Superfan Guardian
+Pantheon Punk Guardian
+Poppy Emo Mosher
+Qiyana True_Damage Crowd_Diver
+Riven 8-bit Edgelord
+Samira Country Executioner
+Senna True_Damage Rapidfire
+Seraphine K/DA Spellweaver
+Sett Heartsteel Bruiser Mosher
+Sona Spellweaver
+Taric Disco Guardian
+Thresh Country Guardian
+Twitch Punk Executioner
+Urgot Country Mosher
+Vex Emo Executioner
+Vi Punk Mosher
+Viego Pentakill Edgelord
+Yasuo True_Damage Edgelord
+Yone Heartsteel Edgelord Crowd_Diver
+Yorick Pentakill Mosher Guardian
+Zac EDM Bruiser
+Zed EDM Crowd_Diver
+Ziggs Hyperpop Dazzler
+Miss_Fortune Jazz Big_Shot
+Olaf Pentakill Bruiser
+Tahm_Kench Country Bruiser
+Twisted_Fate Disco Dazzler
+K'Sante Heartsteel Sentinel
+Kai'Sa K/DA Big_Shot
+Akali2 True_Damage Executioner
+Garen 8-bit Sentinel

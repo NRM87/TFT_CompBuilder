@@ -79,9 +79,18 @@
     <Text Include="Set8.5TraitInfo.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="Set10ChampionInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set10TraitInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="TFTSetsInfo\set8.json">
+      <Filter>Source Files\TFTSetJSONs</Filter>
+    </None>
+    <None Include="TFTSetJSONs\set10.json">
       <Filter>Source Files\TFTSetJSONs</Filter>
     </None>
   </ItemGroup>

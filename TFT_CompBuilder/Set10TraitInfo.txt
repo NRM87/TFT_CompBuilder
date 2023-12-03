@@ -1,0 +1,24 @@
+Emo 2 4 6
+Sentinel 2 4 6 8
+Guardian 2 4 6
+True_Damage 2 4 6 9
+Country 3 5 7
+8-bit 2 4 6
+Spellweaver 3 5 7 10
+Hyperpop 1 2 3 4
+Pentakill 3 5 7 10
+Edgelord 3 5 7
+Executioner 2 4 6
+Superfan 3 4 5
+Big_Shot 2 4 6
+Crowd_Diver 2 4 6
+K/DA 3 5 7 10
+Disco 3 4 5 6
+Mosher 2 4 6
+Rapidfire 2 4 6
+Punk 2 4 6
+Dazzler 2 4 6
+Heartsteel 3 5 7 10
+Bruiser 2 4 6
+Jazz 2 3 4
+EDM 2 3 4 5

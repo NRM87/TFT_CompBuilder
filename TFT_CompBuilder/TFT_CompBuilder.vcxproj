@@ -152,6 +152,8 @@
     <ClInclude Include="HelperFunctions.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="Set10ChampionInfo.txt" />
+    <Text Include="Set10TraitInfo.txt" />
     <Text Include="Set7ChampionInfo.txt" />
     <Text Include="Set7TraitInfo.txt" />
     <Text Include="Set8.5ChampionInfo.txt" />
@@ -163,6 +165,7 @@
     <Text Include="SourceInput.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="TFTSetJSONs\set10.json" />
     <None Include="TFTSetsInfo\set8.json" />
   </ItemGroup>
   <ItemGroup>

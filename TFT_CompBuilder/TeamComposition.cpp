@@ -8,25 +8,25 @@ using namespace std;
 //For runtime efficiency, gates eliminate generated comps that do not have enough traits or tiers to reach the target amount of the last gate of the target size.
 //The values of the gates were determined experimentally, with them being the max value that will still ensure all comps of the last gate size will make it to the end.
 const int TeamComposition::ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitsTotal
-	{2,0,0,0,0,0,0,0,0},
-	{2,4,0,0,0,0,0,0,0},
-	{2,4,5,0,0,0,0,0,0},
-	{2,3,5,7,0,0,0,0,0},
-	{2,3,4,5,7,0,0,0,0},
-	{2,3,4,5,6,8,0,0,0},
-	{2,3,3,4,6,7,9,0,0},
-	{1,2,3,4,5,7,8,10,0},
-	{2,3,4,5,6,7,9,10,12} };
+	{1,0,0,0,0,0,0,0,0},
+	{1,2,0,0,0,0,0,0,0},
+	{1,2,3,0,0,0,0,0,0},
+	{1,2,3,4,0,0,0,0,0},
+	{1,2,3,4,5,0,0,0,0},
+	{1,2,3,4,5,6,0,0,0},
+	{1,2,3,4,5,6,7,0,0},
+	{1,2,3,4,5,6,7,8,0},
+	{1,2,3,4,5,6,7,8,9}, };
 const int TeamComposition::ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitTiersTotal
-	{2,0,0,0,0,0,0,0,0},
-	{2,3,0,0,0,0,0,0,0},
-	{2,3,5,0,0,0,0,0,0},
-	{2,3,4,6,0,0,0,0,0},
-	{2,3,4,5,7,0,0,0,0},
-	{2,3,4,5,7,9,0,0,0},
-	{2,3,4,5,7,8,10,0,0},
-	{2,3,4,5,7,9,10,12,0},
-	{2,3,4,5,7,9,10,11,13} };
+	{1,0,0,0,0,0,0,0,0},
+	{1,2,0,0,0,0,0,0,0},
+	{1,2,3,0,0,0,0,0,0},
+	{1,2,3,4,0,0,0,0,0},
+	{1,2,3,4,5,0,0,0,0},
+	{1,2,3,4,5,6,0,0,0},
+	{1,2,3,4,5,6,7,0,0},
+	{1,2,3,4,5,6,7,8,0},
+	{1,2,3,4,5,6,7,8,9}, };
 bool TeamComposition::initialized = false;
 long long TeamComposition::dragons = 0;
 long long TeamComposition::scalescorns = 0;
@@ -150,19 +150,18 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, bool settin
 					long long nextCompDragons = (dragons & nextComp.champions);
 					bool hasAtMostOneDragon = !((nextCompDragons & (nextCompDragons - 1)) && nextCompDragons);
 					bool hasDragonAndScalescorn = (dragons & nextComp.champions) && (scalescorns & nextComp.champions);
-					bool hasSufficientTraits = true;
 
 					//Set 8 conditions
 						//TODO: Threat trait conditions
 
-					
+					bool hasSufficientTraits = true;
 					if (!settings[0]) {
 						int traitValue = (settings[1] ? nextComp.getActiveTraitTiersTotal() : nextComp.getActiveTraitsTotal());
 						hasSufficientTraits = (traitValue >= (*GATES)[compSize - 1][nextComp.compSize - 1]);
 					}
 
 					//TODO figure out these reqs and apply it for Threat
-					if (!hasSufficientTraits || !hasAtMostOneDragon || hasDragonAndScalescorn) continue;
+					if (!hasSufficientTraits) continue;
 
 					//If the generated comp passes the above if-statement, send it to the next round of building and pruning.
 					nextCompSet.emplace(nextComp);
