@@ -85,6 +85,24 @@
     <Text Include="Set10TraitInfo.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="Set11ChampionInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set11TraitInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set12TraitInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set12ChampionInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set13ChampionInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="Set13TraitInfo.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="TFTSetsInfo\set8.json">

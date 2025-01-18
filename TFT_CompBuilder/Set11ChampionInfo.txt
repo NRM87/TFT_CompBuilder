@@ -1,0 +1,60 @@
+Aatrox Inkshadow Ghostly Bruiser
+Ahri Fated Arcanist
+Alune Umbral Invoker
+Amumu Porcelain Warden
+Annie Fortune Invoker
+Aphelios Fated Sniper
+Ashe Porcelain Sniper
+Azir Dryad Invoker
+Bard Mythic Trickshot
+Caitlyn Ghostly Sniper
+Cho'Gath Mythic Behemoth
+Darius Umbral Duelist
+Diana Dragonlord Sage
+Galio Storyweaver Bruiser
+Garen Storyweaver Warden
+Gnar Dryad Warden
+Hwei Mythic Artist
+Illaoi Ghostly Warden Arcanist
+Irelia Storyweaver Duelist
+Janna Dragonlord Invoker
+Jax Inkshadow Warden
+Kai'Sa Inkshadow Trickshot
+Kayn Ghostly Reaper
+Kha'Zix Heavenly Reaper
+Kindred Dryad Fated Reaper
+Kobuko Fortune Bruiser
+Kog'Maw Mythic Invoker Sniper
+Lee_Sin Dragonlord Duelist
+Lillia Mythic Invoker
+Lissandra Porcelain Arcanist
+Lux Porcelain Arcanist
+Malphite Heavenly Behemoth
+Morgana Ghostly Sage
+Nautilus Mythic Warden
+Neeko Mythic Heavenly Arcanist
+Ornn Dryad Behemoth
+Qiyana Heavenly Duelist
+Rek'Sai Dryad Bruiser
+Riven Storyweaver Altruist Bruiser
+Senna Inkshadow Sniper
+Sett Fated Umbral Warden
+Shen Ghostly Behemoth
+Sivir Storyweaver Trickshot
+Soraka Heavenly Altruist
+Sylas Umbral Bruiser
+Syndra Fated Arcanist
+Tahm_Kench Mythic Bruiser
+Teemo Fortune Trickshot
+Thresh Fated Behemoth
+Tristana Fortune Duelist
+Udyr Inkshadow Spirit_Walker Behemoth
+Volibear Inkshadow Duelist
+Wukong Heavenly Great Sage
+Xayah Dragonlord Lovers Trickshot
+Rakan Dragonlord Lovers Altruist
+Yasuo Fated Duelist
+Yone Umbral Reaper
+Yorick Umbral Behemoth
+Zoe Storyweaver Fortune Arcanist
+Zyra Storyweaver Sage

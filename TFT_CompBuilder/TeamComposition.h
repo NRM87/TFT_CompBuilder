@@ -25,7 +25,8 @@ public:
 	//Accessors
 	short size() const { return compSize; }; 
 	int getActiveTraitTiersTotal() const; 
-	int getActiveTraitsTotal() const; 
+	int getActiveTraitsTotal() const;
+	bool containsChamp(const string& champion) const;
 	string toString() const; 
 
 	//Mutators
@@ -35,7 +36,7 @@ public:
 	bool operator==(const TeamComposition& left) const { return this->champions == left.champions; };
 
 	//Static accessors
-	static vector<TeamComposition> generateComps(int compSize, bool traitSettings[3]); //returns a list of comps based on a target comp size and settings
+	static vector<TeamComposition> generateComps(int compSize, int traitSettings[3]); //returns a list of comps based on a target comp size and settings
 	static vector<TeamComposition> generateComps(int compSize); //calls default settings of generateComps
 	static unordered_map<string, vector<string>> getChampGraph() { return championGraph; }; 
 
@@ -59,7 +60,7 @@ private:
 	long long connectedChamps; //64bit set of champions not already in the comp that share traits with any of the champions in the comp
 
 	static bool initialized; //keeps track of if static fields have been properly initialized
-	static const int MAX_COMP_SIZE = 9; //maximum comp size for generateComps algorithm
+	static const int MAX_COMP_SIZE = 10; //maximum comp size for generateComps algorithm
 
 	//gates for pruning incremental sizes of comps during generateComps algorithm
 	static const int ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE]; 

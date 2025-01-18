@@ -1,0 +1,60 @@
+Caitlyn Enforcer Sniper
+Jayce Academy Form_Swapper
+Jinx Rebel Ambusher
+LeBlanc Black_Rose Sorcerer
+Malzahar Automata Visionary
+Mordekaiser Conqueror Dominator
+Rumble Scrap Sentinel
+Sevika Chem_Baron Pit_Fighter
+Ambessa Emissary Conqueror Quickstriker
+Corki Scrap Artillerist
+DrMundo Experiment Dominator
+Ekko Firelight Scrap Ambusher
+Elise Black_Rose Form_Swapper Bruiser
+Garen Emissary Watcher
+Heimerdinger Academy Visionary
+Illaoi Rebel Sentinel
+Silco Chem_Baron Dominator
+Twitch Experiment Sniper
+Vi Enforcer Pit_Fighter
+Zoe Rebel Sorcerer
+Blitzcrank Automata Dominator
+Cassiopeia Black_Rose Dominator
+Ezreal Academy Rebel Artillerist
+Gangplank Scrap Form_Swapper Pit_Fighter
+Kog'Maw Automata Sniper
+Loris Enforcer Sentinel
+Nami Emissary Sorcerer
+Nunu_&_Willump Experiment Bruiser Visionary
+Renni Chem_Baron Bruiser
+Scar Firelight Watcher
+Smeech Chem_Baron Ambusher
+Swain Conqueror Form_Swapper Sorcerer
+Twisted_Fate Enforcer Quickstriker
+Akali Rebel Quickstriker
+Camille Enforcer Ambusher
+Leona Academy Sentinel
+Nocturne Automata Quickstriker
+Rell Conqueror Sentinel Visionary
+Renata_Glasc Chem_Baron Visionary
+Sett Rebel Bruiser
+Tristana Emissary Artillerist
+Urgot Experiment Pit_Fighter Artillerist
+Vander Family Watcher
+Vladimir Black_Rose Sorcerer Watcher
+Zeri Firelight Sniper
+Ziggs Scrap Dominator
+Amumu Automata Watcher
+Darius Conqueror Watcher
+Draven Conqueror Pit_Fighter
+Irelia Rebel Sentinel
+Lux Academy Sorcerer
+Maddie Enforcer Sniper
+Morgana Black_Rose Visionary
+Powder Family Scrap Ambusher
+Singed Chem_Baron Sentinel
+Steb Enforcer Bruiser
+Trundle Scrap Bruiser
+Vex Rebel Visionary
+Violet Family Pit_Fighter
+Zyra Experiment Sorcerer

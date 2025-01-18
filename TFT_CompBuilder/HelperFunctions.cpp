@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 #include "json.hpp"
 using namespace std;
 using json = nlohmann::json;
@@ -29,7 +30,7 @@ void readChampInfo(string fileName, unordered_map<string, Champion>& champions) 
 		while (!line.eof()) {
 			line >> holder; //holder now holds the next string in the line, a trait
 			champ.addTrait(holder);
-			if (holder == "Dragon") {
+			if (holder == "Dragon77") {
 				line >> holder; //reads dragon-enhanced trait, which should come right after "Dragon" in the text file
 				champ.addTrait(holder, 2);
 				champ.setWidth(2);
@@ -62,6 +63,7 @@ void readTraitInfo(string fileName, unordered_map<string, vector<int>>& traits) 
 			traitMilestones.push_back(traitMilestone);
 		}
 		if (traitMilestones.size() == 0) throw runtime_error("Trait milestone not found while reading trait info file.");
+		if (traits.contains(holder)) throw runtime_error("Trait already exists while reading trait info file.");
 		traits.emplace(holder, traitMilestones);
 	}
 	line.clear();
@@ -125,4 +127,10 @@ void parseCDragon(string fileName, string setNum) {
 }
 
 
+//
+//
+//
+void set12TahmFilter(vector<TeamComposition>& listToFilter) {
+	std::erase_if(listToFilter, [](TeamComposition t) {return !t.containsChamp("Tahm_Kench");});
+}
 

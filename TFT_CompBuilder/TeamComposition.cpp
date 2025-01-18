@@ -8,25 +8,27 @@ using namespace std;
 //For runtime efficiency, gates eliminate generated comps that do not have enough traits or tiers to reach the target amount of the last gate of the target size.
 //The values of the gates were determined experimentally, with them being the max value that will still ensure all comps of the last gate size will make it to the end.
 const int TeamComposition::ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitsTotal
-	{1,0,0,0,0,0,0,0,0},
-	{1,2,0,0,0,0,0,0,0},
-	{1,2,3,0,0,0,0,0,0},
-	{1,2,3,4,0,0,0,0,0},
-	{1,2,3,4,5,0,0,0,0},
-	{1,2,3,4,5,6,0,0,0},
-	{1,2,3,4,5,6,7,0,0},
-	{1,2,3,4,5,6,7,8,0},
-	{1,2,3,4,5,6,7,8,9}, };
+	{1,0,0,0,0,0,0,0,0,0},
+	{1,2,0,0,0,0,0,0,0,0},
+	{1,2,3,0,0,0,0,0,0,0},
+	{1,2,3,5,0,0,0,0,0,0},
+	{1,2,3,5,6,0,0,0,0,0},
+	{1,2,3,5,6,7,0,0,0,0},
+	{1,2,3,5,6,7,8,0,0,0},
+	{1,2,3,5,6,7,8,9,0,0},
+	{1,2,3,4,5,7,8,9,11,0}, 
+	{1,2,3,4,5,7,8,9,11,12}};
 const int TeamComposition::ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitTiersTotal
-	{1,0,0,0,0,0,0,0,0},
-	{1,2,0,0,0,0,0,0,0},
-	{1,2,3,0,0,0,0,0,0},
-	{1,2,3,4,0,0,0,0,0},
-	{1,2,3,4,5,0,0,0,0},
-	{1,2,3,4,5,6,0,0,0},
-	{1,2,3,4,5,6,7,0,0},
-	{1,2,3,4,5,6,7,8,0},
-	{1,2,3,4,5,6,7,8,9}, };
+	{1,0,0,0,0,0,0,0,0,0},
+	{1,2,0,0,0,0,0,0,0,0},
+	{1,2,3,0,0,0,0,0,0,0},
+	{1,2,3,4,0,0,0,0,0,0},
+	{1,2,3,4,5,0,0,0,0,0},
+	{1,2,3,4,5,6,0,0,0,0},
+	{1,2,3,4,5,6,7,0,0,0},
+	{1,2,3,4,5,6,7,8,0,0},
+	{0,1,2,3,5,6,7,8,10,0},
+	{0,1,2,3,5,6,7,8,10,11}};
 bool TeamComposition::initialized = false;
 long long TeamComposition::dragons = 0;
 long long TeamComposition::scalescorns = 0;
@@ -69,9 +71,14 @@ int TeamComposition::getActiveTraitsTotal() const {
 		string trait = traitArrPosToStringMap[i];
 		int traitVal = compTraits[i];
 		//count trait as active if the comp has an amount of trait greater than or equal to the first milestone of the trait
+		if (currentSetTraits.count(trait) == 0) throw runtime_error("Trait not found: " + trait);
 		if (traitVal >= currentSetTraits.at(trait).at(0)) ++total; 																					
 	}
 	return total;
+}
+
+bool TeamComposition::containsChamp(const string& champion) const {
+	return (1LL << champStringToBitPosMap.at(champion) & champions);
 }
 
 //Returns a string representation of the comp
@@ -109,13 +116,20 @@ bool TeamComposition::addChamp(string champ) {
 }
 
 //Generates and returns a list of comps given a target comp size and list of settings
-//settings[] guide: settings[0] - use gates or not; settings[1] - use trait or tier gates; settings[2] - use all champs or only connectedChamps
-//Example settings: Default - {0,0,0} | All possible comps - {1,0,0} | Use tier gates, not trait gates - {0,1,0}
-vector<TeamComposition> TeamComposition::generateComps(int compSize, bool settings[3]) {
-	if (compSize > 9 || compSize < 1) throw runtime_error("generateComps must have parameter compSize between 1 and 9 (inclusive).");
+//settings[] guide: 
+//  settings[0] - use pruning or not
+//  settings[1] - Pruning mode. 0 = trait gates; 1 = tier gates; 2 = dynamic
+//  settings[2] - use all champs or only connectedChamps;
+//Example settings:
+//  Default - {0,0,0} 
+//  All possible comps - {1,0,0}
+//  Use tier gates, not trait gates - {0,1,0}
+//  Use dynamic pruning - {0,2,0}
+vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3]) {
+	if (compSize > 10 || compSize < 1) throw runtime_error("generateComps must have parameter compSize between 1 and 9 (inclusive).");
 
 	//Pick what gates to use based on settings[1]
-	const int(*GATES)[9][9];
+	const int(*GATES)[10][10];
 	if (settings[1]) GATES = &ACTIVE_TIER_GATES;
 	else GATES = &ACTIVE_TRAIT_GATES;
 
@@ -124,54 +138,63 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, bool settin
 	compSet.emplace(TeamComposition());
 	unordered_set<TeamComposition, teamCompHash> nextCompSet; //holds newly generated comps for the next while loop iteration
 
+	int prevTraitValMax = 0;
+	int currTraitValMax = 0;
+
+	//BFS over comps
 	while (currCompSize < compSize) { 
 		++currCompSize;
+		currTraitValMax = 0;
 
 		for (const TeamComposition& currComp : compSet) { 
-			if (currComp.compSize < currCompSize) {
+			//if (currComp.compSize < currCompSize) {
 				//Pick what champs will be considered when generating the next-sized comps
-				long long connections;
-				if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
-				else connections = ~currComp.champions; //consider every champ not in the current comp already
+			long long connections;
+			if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
+			else connections = ~currComp.champions; //consider every champ not in the current comp already
 
-				//iterates for each champ that could be added to the comp
-				for (int i = 0; i < globalChampInfoMap.size(); ++i) { 
-					string champ = champBitPosToStringMap[i];
+			//iterates for each champ that could be added to the comp
+			for (int i = 0; i < globalChampInfoMap.size(); ++i) { 
+				string champ = champBitPosToStringMap[i];
 
-					bool champConnected = (connections & (1LL << i)) >> i; //if champ is supposed to be considered
-					bool champFits = globalChampInfoMap.at(champ).getWidth() <= (compSize - currComp.compSize);
-					if (!champConnected || !champFits) continue; 
+				bool champConnected = (connections & (1LL << i)) >> i; //if champ is supposed to be considered
+				bool champFits = globalChampInfoMap.at(champ).getWidth() <= (compSize - currComp.compSize); // for set 7 dragons
+				if (!champConnected || !champFits) continue;
 
-					//Generates a new comp from a comp generated from last while loop iteration and a new champ that passes the above if-statement
-					TeamComposition nextComp(currComp);
-					nextComp.addChamp(champ);
+				//Generates a new comp from a comp generated from last while loop iteration and a new champ that passes the above if-statement
+				TeamComposition nextComp(currComp);
+				nextComp.addChamp(champ);
 
-					//Set 7 conditions
-					long long nextCompDragons = (dragons & nextComp.champions);
-					bool hasAtMostOneDragon = !((nextCompDragons & (nextCompDragons - 1)) && nextCompDragons);
-					bool hasDragonAndScalescorn = (dragons & nextComp.champions) && (scalescorns & nextComp.champions);
+				//Set 7 conditions
+				//long long nextCompDragons = (dragons & nextComp.champions);
+				//bool hasAtMostOneDragon = !((nextCompDragons & (nextCompDragons - 1)) && nextCompDragons);
+				//bool hasDragonAndScalescorn = (dragons & nextComp.champions) && (scalescorns & nextComp.champions);
 
-					//Set 8 conditions
-						//TODO: Threat trait conditions
-
-					bool hasSufficientTraits = true;
-					if (!settings[0]) {
-						int traitValue = (settings[1] ? nextComp.getActiveTraitTiersTotal() : nextComp.getActiveTraitsTotal());
-						hasSufficientTraits = (traitValue >= (*GATES)[compSize - 1][nextComp.compSize - 1]);
+				if (!settings[0]) {
+					int traitValue = (settings[1] == 1 ? nextComp.getActiveTraitTiersTotal() : nextComp.getActiveTraitsTotal());
+					if (settings[1] == 2) {
+						// dynamic pruning
+						if (traitValue < prevTraitValMax + 1) continue;
+						if (traitValue > currTraitValMax) currTraitValMax = traitValue;
 					}
-
-					//TODO figure out these reqs and apply it for Threat
-					if (!hasSufficientTraits) continue;
-
-					//If the generated comp passes the above if-statement, send it to the next round of building and pruning.
-					nextCompSet.emplace(nextComp);
+					else {
+						// gate pruning
+						bool hasSufficientTraits = (traitValue >= (*GATES)[compSize - 1][nextComp.compSize - 1]);
+						if (!hasSufficientTraits) continue;
+					}
+						
 				}
+
+				//If the generated comp passes the above if-statement, send it to the next round of building and pruning.
+				nextCompSet.emplace(nextComp);
 			}
-			//saves the comp for the next iteration of the while loop if it was too big for this iteration but smaller than the final target comp size
-			else if (currComp.compSize <= compSize) {
-				nextCompSet.emplace(currComp); 
-			}
+			//}
+			//saves the comp for the next iteration of the while loop if it was too big for this iteration but smaller than the final target comp size (for set 7 dragons)
+			//else if (currComp.compSize <= compSize) {
+			//	nextCompSet.emplace(currComp); 
+			//}
 		}
+		prevTraitValMax = currTraitValMax;
 		//sets compSet to nextCompSet so the process can be repeated in the next iteration of the while loop
 		compSet = nextCompSet; 
 		nextCompSet.clear();
@@ -187,7 +210,7 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, bool settin
 }
 //Calls generateComps with default settings
 vector<TeamComposition> TeamComposition::generateComps(int compSize) {
-	bool traitSettings[3] = { 0,0,0 };
+	int traitSettings[3] = { 0,0,0 };
 	return generateComps(compSize, traitSettings);
 }
 

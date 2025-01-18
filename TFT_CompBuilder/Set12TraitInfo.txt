@@ -1,0 +1,22 @@
+Arcana 2 3 4 5
+Chrono 2 4 6
+Dragon 2 3
+Eldritch 3 5 7 10
+Faerie 2 4 6 8
+Frost 3 5 7 9
+Honeymancy 3 5
+Portal 3 6 8 10
+Pyro 2 3 4 5
+Sugarcraft 2 4 6
+Witchcraft 2 4 6 8
+Bastion 2 4 6 8
+Blaster 2 4 6
+Hunter 2 4 6
+Incantor 2 4
+Mage 3 5 7 9
+Multistriker 3 5 7 9
+Preserver 2 3 4 5
+Scholar 2 4 6
+Shapeshifter 2 4 6 8
+Vanguard 2 4 6
+Warrior 2 4 6

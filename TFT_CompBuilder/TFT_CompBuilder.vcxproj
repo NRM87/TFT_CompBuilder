@@ -116,6 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,6 +155,12 @@
   <ItemGroup>
     <Text Include="Set10ChampionInfo.txt" />
     <Text Include="Set10TraitInfo.txt" />
+    <Text Include="Set11ChampionInfo.txt" />
+    <Text Include="Set11TraitInfo.txt" />
+    <Text Include="Set12ChampionInfo.txt" />
+    <Text Include="Set12TraitInfo.txt" />
+    <Text Include="Set13ChampionInfo.txt" />
+    <Text Include="Set13TraitInfo.txt" />
     <Text Include="Set7ChampionInfo.txt" />
     <Text Include="Set7TraitInfo.txt" />
     <Text Include="Set8.5ChampionInfo.txt" />

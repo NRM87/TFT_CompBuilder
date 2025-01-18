@@ -13,7 +13,7 @@
 #include "TeamComposition.h"
 using namespace std;
 
-#define SET "10"
+#define SET "13"
 #define CDRAGONJSON(set) ("TFTSetJSONs\\set" + set + ".json")
 #define LEGACYGUARD (stoi(SET) >= 8 && SET != "8.5")
 #define CHAMPINFOFILE(set) ("Set" + set + "ChampionInfo.txt")
@@ -90,7 +90,7 @@ int main() {
 
 
 	//user input for settings and target comp size to be generated
-	bool settings[3] = { 0,0,0 };
+	int settings[3] = { 0,0,0 };
 	cout << endl << "Do you want to change the default settings? (\"y\"/\"n\")." << endl;
 	USINGINPUTFILE ? input >> ans : cin >> ans;
 	if (ans == "y") {
@@ -112,12 +112,17 @@ int main() {
 	time_t programStartTime = time(NULL); //record time to measure algorithm runtime
 	vector<TeamComposition> compList = TeamComposition::generateComps(compositionSize,settings); //comp generating algorithm
 	
+	
+
 	//Print compList
 	vector<TeamComposition> listToPrint = compList;
+	
+	if (SET == "12") set12TahmFilter(listToPrint);
+
 	cout << endl << "Generated " << listToPrint.size() << " team compositions of size " << compositionSize << ": " << endl;
 	count = 1;
 	for (const TeamComposition& comp : listToPrint) {
-		cout << setw(2) << count << ":" << comp.toString() << " | Num traits: " << comp.getActiveTraitTiersTotal() << endl;
+		cout << setw(2) << count << ":" << comp.toString() << " | Num traits: " << comp.getActiveTraitsTotal() << endl;
 		count++;
 	}
 	cout << "Total comps: " << listToPrint.size() << endl;
