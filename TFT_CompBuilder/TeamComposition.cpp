@@ -30,12 +30,12 @@ const int TeamComposition::ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { /
 	{0,1,2,3,5,6,7,8,10,0},
 	{0,1,2,3,5,6,7,8,10,11}};
 bool TeamComposition::initialized = false;
-long long TeamComposition::dragons = 0;
-long long TeamComposition::scalescorns = 0;
+ChampSet TeamComposition::dragons = 0;
+ChampSet TeamComposition::scalescorns = 0;
 unordered_map<string, Champion> TeamComposition::globalChampInfoMap;
 unordered_map<string, vector<int>> TeamComposition::currentSetTraits;
 unordered_map<string, vector<string>> TeamComposition::championGraph;
-unordered_map<string, long long> TeamComposition::championLLGraph;
+unordered_map<string, ChampSet> TeamComposition::championBitsetGraph;
 unordered_map<string, int> TeamComposition::champStringToBitPosMap;
 string TeamComposition::champBitPosToStringMap[64];
 string TeamComposition::traitArrPosToStringMap[32];
@@ -78,7 +78,7 @@ int TeamComposition::getActiveTraitsTotal() const {
 }
 
 bool TeamComposition::containsChamp(const string& champion) const {
-	return (1LL << champStringToBitPosMap.at(champion) & champions);
+	return champions.test(champStringToBitPosMap.at(champion));
 }
 
 //Returns a string representation of the comp
@@ -86,7 +86,7 @@ string TeamComposition::toString() const {
 	string s = "";
 	int champCount = 0;
 	for (int i = 0; i < globalChampInfoMap.size(); ++i) {
-		if ((champions & (1LL << i)) >> i) {
+		if (champions.test(i)) {
 			s += " " + champBitPosToStringMap[i];
 			++champCount;
 			if (champCount == MAX_COMP_SIZE) return s;
@@ -97,7 +97,7 @@ string TeamComposition::toString() const {
 
 //Adds a champ to the comp and updates compTraits and connectedChamps accordingly. Returns true if champ was added.
 bool TeamComposition::addChamp(string champ) { 
-	long long oldChamps = champions;
+	ChampSet oldChamps = champions;
 	champions |= (1LL << champStringToBitPosMap.at(champ)); //Add the champ to the comp, duplicates are not added
 	if (champions == oldChamps) return false; //if the champ was already in the comp, do nothing
 
@@ -108,7 +108,7 @@ bool TeamComposition::addChamp(string champ) {
 		compTraits[traitStringToArrPosMap.at(traitName)] += (short)traitValue;
 	}
 		
-	connectedChamps |= championLLGraph.at(champ); //adds champ's connected champs to the comp's connected champs
+	connectedChamps |= championBitsetGraph.at(champ); //adds champ's connected champs to the comp's connected champs
 	connectedChamps &= (~champions); //removes champs from connectedChamps that are already in the comp
 		
 	compSize += globalChampInfoMap.at(champ).getWidth(); //increases the comp's size by the champ's width
@@ -147,9 +147,9 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 		currTraitValMax = 0;
 
 		for (const TeamComposition& currComp : compSet) { 
-			//if (currComp.compSize < currCompSize) {
-				//Pick what champs will be considered when generating the next-sized comps
-			long long connections;
+			//if (currComp.compSize < currCompSize) { //skip comps that are already too big for this iteration (for set 7 dragons)
+			//Pick what champs will be considered when generating the next-sized comps
+			ChampSet connections;
 			if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
 			else connections = ~currComp.champions; //consider every champ not in the current comp already
 
@@ -157,9 +157,9 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 			for (int i = 0; i < globalChampInfoMap.size(); ++i) { 
 				string champ = champBitPosToStringMap[i];
 
-				bool champConnected = (connections & (1LL << i)) >> i; //if champ is supposed to be considered
-				bool champFits = globalChampInfoMap.at(champ).getWidth() <= (compSize - currComp.compSize); // for set 7 dragons
-				if (!champConnected || !champFits) continue;
+				bool champConnected = connections.test(i); //if champ is supposed to be considered
+				//bool champFits = globalChampInfoMap.at(champ).getWidth() <= (compSize - currComp.compSize); // for set 7 dragons
+				if (!champConnected /*|| !champFits */) continue;
 
 				//Generates a new comp from a comp generated from last while loop iteration and a new champ that passes the above if-statement
 				TeamComposition nextComp(currComp);
@@ -188,7 +188,6 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 				//If the generated comp passes the above if-statement, send it to the next round of building and pruning.
 				nextCompSet.emplace(nextComp);
 			}
-			//}
 			//saves the comp for the next iteration of the while loop if it was too big for this iteration but smaller than the final target comp size (for set 7 dragons)
 			//else if (currComp.compSize <= compSize) {
 			//	nextCompSet.emplace(currComp); 
@@ -229,9 +228,9 @@ void TeamComposition::initializeStatics(unordered_map<string, vector<int>> trait
 		//Maps a champion's name as a string to a number. The number is the bit position in a long-long that the champ will now correspond with
 		champStringToBitPosMap.emplace(champ.first, count); 
 
-		//Adds champions with certain traits to respective long-longs that keep track of which champions hold these traits 
-		if (champ.second.getTraitMap().count("Dragon")) dragons += (1LL << count); 
-		if (champ.second.getTraitMap().count("Scalescorn")) scalescorns += (1LL << count);
+		//Adds champions with certain traits to respective bitsets that keep track of which champions hold these traits 
+		if (champ.second.getTraitMap().count("Dragon")) dragons.set(count); 
+		if (champ.second.getTraitMap().count("Scalescorn")) scalescorns.set(count);
 
 		++count; //increment so that next champion will have a different corresponding number for mapping
 	}
@@ -278,7 +277,7 @@ void TeamComposition::initializeStatics(unordered_map<string, vector<int>> trait
 		for (string champ : champConnections.second) {
 			connections |= (1LL << champStringToBitPosMap.at(champ));
 		}
-		championLLGraph.emplace(champConnections.first, connections);
+		championBitsetGraph.emplace(champConnections.first, connections);
 	}
 
 	//Set initialized to true. Once true, objects of TeamComposition can be constructed.
