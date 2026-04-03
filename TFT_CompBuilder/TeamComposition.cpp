@@ -40,6 +40,9 @@ unordered_map<string, int> TeamComposition::champStringToBitPosMap;
 string TeamComposition::champBitPosToStringMap[128];
 string TeamComposition::traitArrPosToStringMap[64];
 unordered_map<string, short> TeamComposition::traitStringToArrPosMap;
+short TeamComposition::champWidthByBitPos[128];
+ChampSet TeamComposition::championConnectionsByBitPos[128];
+vector<TeamComposition::TraitDelta> TeamComposition::champTraitDeltasByBitPos[128];
 
 //Returns the amount of active trait tiers
 int TeamComposition::getActiveTraitTiersTotal() const {
@@ -96,22 +99,22 @@ string TeamComposition::toString() const {
 }
 
 //Adds a champ to the comp and updates compTraits and connectedChamps accordingly. Returns true if champ was added.
-bool TeamComposition::addChamp(string champ) { 
-	ChampSet oldChamps = champions;
-	champions.set(champStringToBitPosMap.at(champ)); //Add the champ to the comp, duplicates are not added
-	if (champions == oldChamps) return false; //if the champ was already in the comp, do nothing
+bool TeamComposition::addChamp(const string& champ) {
+	return addChamp(champStringToBitPosMap.at(champ));
+}
 
-	map<string, int> champTraits = globalChampInfoMap.at(champ).getTraitMap();
-	for (pair<string, int> trait : champTraits) {
-		string traitName = trait.first;
-		int traitValue = trait.second;
-		compTraits[traitStringToArrPosMap.at(traitName)] += (short)traitValue;
+bool TeamComposition::addChamp(int champBitPos) {
+	if (champions.test(champBitPos)) return false;
+	champions.set(champBitPos); //Add the champ to the comp, duplicates are not added
+
+	for (const TraitDelta& trait : champTraitDeltasByBitPos[champBitPos]) {
+		compTraits[trait.traitPos] += trait.traitValue;
 	}
-		
-	connectedChamps |= championBitsetGraph.at(champ); //adds champ's connected champs to the comp's connected champs
+
+	connectedChamps |= championConnectionsByBitPos[champBitPos]; //adds champ's connected champs to the comp's connected champs
 	connectedChamps &= (~champions); //removes champs from connectedChamps that are already in the comp
-		
-	compSize += globalChampInfoMap.at(champ).getWidth(); //increases the comp's size by the champ's width
+
+	compSize += champWidthByBitPos[champBitPos]; //increases the comp's size by the champ's width
 	return true;
 }
 
@@ -132,6 +135,7 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 	const int(*GATES)[10][10];
 	if (settings[1]) GATES = &ACTIVE_TIER_GATES;
 	else GATES = &ACTIVE_TRAIT_GATES;
+	const int champCount = (int)globalChampInfoMap.size();
 
 	int currCompSize = 0;
 	unordered_set<TeamComposition, teamCompHash> compSet; //holds the previous while loop iteration's generated comps
@@ -155,16 +159,14 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 
 			// TODO: multi-thread this, make nextCompSet thread safe:
 			//iterates for each champ that could be added to the comp
-			for (int i = 0; i < globalChampInfoMap.size(); ++i) { 
-				string champ = champBitPosToStringMap[i];
-
+			for (int i = 0; i < champCount; ++i) {
 				bool champConnected = connections.test(i); //if champ is supposed to be considered
-				bool champFits = globalChampInfoMap.at(champ).getWidth() <= (compSize - currComp.compSize); // for set 7 dragons
+				bool champFits = champWidthByBitPos[i] <= (compSize - currComp.compSize); // for set 7 dragons
 				if (!champConnected || !champFits ) continue;
 
 				//Generates a new comp from a comp generated from last while loop iteration and a new champ that passes the above if-statement
 				TeamComposition nextComp(currComp);
-				nextComp.addChamp(champ);
+				nextComp.addChamp(i);
 
 				//Set 7 conditions
 				//long long nextCompDragons = (dragons & nextComp.champions);
@@ -221,6 +223,21 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize) {
 void TeamComposition::initializeStatics(unordered_map<string, vector<int>> traitData, unordered_map<string, Champion> champInfo) {
 	currentSetTraits = traitData;
 	globalChampInfoMap = champInfo;
+	championGraph.clear();
+	championBitsetGraph.clear();
+	champStringToBitPosMap.clear();
+	traitStringToArrPosMap.clear();
+	dragons.reset();
+	scalescorns.reset();
+	for (int i = 0; i < 128; ++i) {
+		champBitPosToStringMap[i].clear();
+		champWidthByBitPos[i] = 0;
+		championConnectionsByBitPos[i].reset();
+		champTraitDeltasByBitPos[i].clear();
+	}
+	for (int i = 0; i < 64; ++i) {
+		traitArrPosToStringMap[i].clear();
+	}
 
 	//64bit long-longs represent comps; each bit corresponds to a different champion, 1 if it is in the comp and 0 if not
 	//Set champStringToBitPosMap, along with dragons and scalescorns lists (which are long-longs)
@@ -246,8 +263,18 @@ void TeamComposition::initializeStatics(unordered_map<string, vector<int>> trait
 		traitStringToArrPosMap.emplace(trait.first, count);
 		++count;
 	}
-	for (const pair<string, char>& trait : traitStringToArrPosMap) {
+	for (const pair<const string, short>& trait : traitStringToArrPosMap) {
 		traitArrPosToStringMap[(int)trait.second] = trait.first;
+	}
+
+	for (const pair<string, Champion>& champ : champInfo) {
+		int champBitPos = champStringToBitPosMap.at(champ.first);
+		champWidthByBitPos[champBitPos] = (short)champ.second.getWidth();
+		for (const pair<string, int>& trait : champ.second.getTraitMap()) {
+			champTraitDeltasByBitPos[champBitPos].push_back(
+				{ traitStringToArrPosMap.at(trait.first), (short)trait.second }
+			);
+		}
 	}
 
 	//Initializes the champion adjacency list map
@@ -273,12 +300,13 @@ void TeamComposition::initializeStatics(unordered_map<string, vector<int>> trait
 	}
 
 	//Initializes another champion adjacency list, instead using a long-long to store each list
-	for (pair<string, vector<string>> champConnections : championGraph) {
-		long long connections = 0LL;
-		for (string champ : champConnections.second) {
-			connections |= (1LL << champStringToBitPosMap.at(champ));
+	for (const pair<string, vector<string>>& champConnections : championGraph) {
+		ChampSet connections;
+		for (const string& champ : champConnections.second) {
+			connections.set(champStringToBitPosMap.at(champ));
 		}
 		championBitsetGraph.emplace(champConnections.first, connections);
+		championConnectionsByBitPos[champStringToBitPosMap.at(champConnections.first)] = connections;
 	}
 
 	//Set initialized to true. Once true, objects of TeamComposition can be constructed.

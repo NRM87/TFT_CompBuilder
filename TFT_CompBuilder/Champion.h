@@ -20,7 +20,7 @@ public:
 	int getTraitTotal() const { return traitTotal; };
 	int getWidth() const { return width; };
 	string getName() const { return name; };
-	map<string, int> getTraitMap() const { return traits; };
+	const map<string, int>& getTraitMap() const { return traits; };
 	string toString() const;
 
 	//Mutators

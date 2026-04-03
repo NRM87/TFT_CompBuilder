@@ -31,7 +31,7 @@ public:
 	string toString() const; 
 
 	//Mutators
-	bool addChamp(string champ); //adds a champ to the comp and updates relavant trait and connections fields
+	bool addChamp(const string& champ); //adds a champ to the comp and updates relavant trait and connections fields
 	
 	//Operators
 	bool operator==(const TeamComposition& left) const { return this->champions == left.champions; };
@@ -45,6 +45,11 @@ public:
 	//Initializes the static variables based on a trait-traitMilestone map and a name-Champion map
 	static void initializeStatics(unordered_map<string, vector<int>> traitData, unordered_map<string, Champion> champInfo); 
 private: 
+	struct TraitDelta {
+		short traitPos;
+		short traitValue;
+	};
+
 	//Hash function for TeamCompositionLite objects, uses internal bitset champions for the hash.
 	struct teamCompHash {
 		size_t operator()(const TeamComposition& comp) const {
@@ -76,12 +81,17 @@ private:
 	static unordered_map<string, vector<string>> championGraph; //map of champ to set of champs sharing a trait
 	static unordered_map<string, ChampSet> championBitsetGraph; //map of champ to 64bit set of champs sharing a trait
 	static unordered_map<string, vector<int>> currentSetTraits; //map of traits to their trait milestones
+	static short champWidthByBitPos[128];
+	static ChampSet championConnectionsByBitPos[128];
+	static vector<TraitDelta> champTraitDeltasByBitPos[128];
 
 	//Static fields for converting trait or champion strings to their corresponding positions in arrays or 64bit sets, respectively
 	static unordered_map<string, int> champStringToBitPosMap;
 	static string champBitPosToStringMap[];
 	static unordered_map<string, short> traitStringToArrPosMap;
 	static string traitArrPosToStringMap[];
+
+	bool addChamp(int champBitPos);
 
 	/* OLD COMP-GENERATING ALGORITHM FUNCTIONS
 	static vector<TeamCompositionLite> getTeamCompList(int compSize); 
