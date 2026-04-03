@@ -103,6 +103,12 @@
     <Text Include="Set13TraitInfo.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="Set16ChampionInfo.txt" />
+    <Text Include="Set16TraitInfo.txt" />
+    <Text Include="Set9ChampionInfo.txt" />
+    <Text Include="Set9TraitInfo.txt" />
+    <Text Include="Set17ChampionInfo.txt" />
+    <Text Include="Set17TraitInfo.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TFTSetsInfo\set8.json">

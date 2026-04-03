@@ -57,8 +57,8 @@ private:
 	//There shouldn't be more than 32 traits, and values for compSize and any compTraits[n] should never exceed 128 based on typical Teamfight Tactics numbers
 	short compSize; //total width of champions in the comp
 	short compTraits[32]; //each trait and its active amount for the comp
-	bitset<128> champions; //64bit set of champions in the comp
-	bitset<128> connectedChamps; //64bit set of champions not already in the comp that share traits with any of the champions in the comp
+	bitset<128> champions; //bit set of champions in the comp
+	bitset<128> connectedChamps; //bit set of champions not already in the comp that share traits with any of the champions in the comp
 
 	static bool initialized; //keeps track of if static fields have been properly initialized
 	static const int MAX_COMP_SIZE = 10; //maximum comp size for generateComps algorithm

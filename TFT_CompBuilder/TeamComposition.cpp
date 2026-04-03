@@ -11,13 +11,13 @@ const int TeamComposition::ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { 
 	{1,0,0,0,0,0,0,0,0,0},
 	{1,2,0,0,0,0,0,0,0,0},
 	{1,2,3,0,0,0,0,0,0,0},
-	{1,2,3,5,0,0,0,0,0,0},
-	{1,2,3,5,6,0,0,0,0,0},
-	{1,2,3,5,6,7,0,0,0,0},
-	{1,2,3,5,6,7,8,0,0,0},
-	{1,2,3,5,6,7,8,9,0,0},
-	{1,2,3,4,5,7,8,9,11,0}, 
-	{1,2,3,4,5,7,8,9,11,12}};
+	{1,2,3,4,0,0,0,0,0,0},
+	{1,2,3,4,5,0,0,0,0,0},
+	{1,2,3,4,5,7,0,0,0,0},
+	{1,2,3,4,5,7,8,0,0,0},
+	{1,2,3,4,5,7,8,9,0,0},
+	{1,2,3,4,5,7,8,9,10,0}, 
+	{1,2,3,4,5,7,8,9,10,12}};
 const int TeamComposition::ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitTiersTotal
 	{1,0,0,0,0,0,0,0,0,0},
 	{1,2,0,0,0,0,0,0,0,0},
@@ -37,8 +37,8 @@ unordered_map<string, vector<int>> TeamComposition::currentSetTraits;
 unordered_map<string, vector<string>> TeamComposition::championGraph;
 unordered_map<string, ChampSet> TeamComposition::championBitsetGraph;
 unordered_map<string, int> TeamComposition::champStringToBitPosMap;
-string TeamComposition::champBitPosToStringMap[64];
-string TeamComposition::traitArrPosToStringMap[32];
+string TeamComposition::champBitPosToStringMap[128];
+string TeamComposition::traitArrPosToStringMap[64];
 unordered_map<string, short> TeamComposition::traitStringToArrPosMap;
 
 //Returns the amount of active trait tiers
@@ -98,7 +98,7 @@ string TeamComposition::toString() const {
 //Adds a champ to the comp and updates compTraits and connectedChamps accordingly. Returns true if champ was added.
 bool TeamComposition::addChamp(string champ) { 
 	ChampSet oldChamps = champions;
-	champions |= (1LL << champStringToBitPosMap.at(champ)); //Add the champ to the comp, duplicates are not added
+	champions.set(champStringToBitPosMap.at(champ)); //Add the champ to the comp, duplicates are not added
 	if (champions == oldChamps) return false; //if the champ was already in the comp, do nothing
 
 	map<string, int> champTraits = globalChampInfoMap.at(champ).getTraitMap();
@@ -153,13 +153,14 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 			if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
 			else connections = ~currComp.champions; //consider every champ not in the current comp already
 
+			// TODO: multi-thread this, make nextCompSet thread safe:
 			//iterates for each champ that could be added to the comp
 			for (int i = 0; i < globalChampInfoMap.size(); ++i) { 
 				string champ = champBitPosToStringMap[i];
 
 				bool champConnected = connections.test(i); //if champ is supposed to be considered
-				//bool champFits = globalChampInfoMap.at(champ).getWidth() <= (compSize - currComp.compSize); // for set 7 dragons
-				if (!champConnected /*|| !champFits */) continue;
+				bool champFits = globalChampInfoMap.at(champ).getWidth() <= (compSize - currComp.compSize); // for set 7 dragons
+				if (!champConnected || !champFits ) continue;
 
 				//Generates a new comp from a comp generated from last while loop iteration and a new champ that passes the above if-statement
 				TeamComposition nextComp(currComp);

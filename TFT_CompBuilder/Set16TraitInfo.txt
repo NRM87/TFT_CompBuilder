@@ -1,0 +1,26 @@
+Freljord 3 5 7
+Juggernaut 2 4 6
+Quickstriker 2 3 4 5
+Longshot 2 3 4 5
+Vanquisher 2 3 4 5
+Ixtal 3 5 7
+Slayer 2 4 6
+Arcanist 2 4 6
+Gunslinger 2 4
+Piltover 2 4 6
+Darkin 1 2 3
+Disruptor 2 4
+Void 2 4 6 9
+Invoker 2 4
+Demacia 3 5 7 11
+Bilgewater 3 5 7 10
+Targon 1
+Shurima 2 3 4
+Shadow_Isles 2 3 4 5
+Noxus 3 5 7 10
+Yordle 2 4 6 8 10
+Zaun 3 5 7
+Bruiser 2 4 6
+Warden 2 3 4 5
+Ionia 3 5 7 10
+Defender 2 4 6

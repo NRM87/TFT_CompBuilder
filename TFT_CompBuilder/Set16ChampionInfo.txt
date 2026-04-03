@@ -1,0 +1,99 @@
+Tristana Yordle Gunslinger
+Lulu Yordle Arcanist
+Teemo Yordle Longshot
+Rumble Yordle Defender
+Nautilus Bilgewater Juggernaut Warden
+Twisted_Fate Bilgewater Quickstriker
+Gangplank Bilgewater Slayer Vanquisher
+Illaoi Bilgewater Bruiser
+Miss_Fortune Bilgewater Gunslinger
+Sion Noxus Bruiser
+Briar Noxus Slayer Juggernaut
+Draven Noxus Quickstriker
+Ambessa Noxus Vanquisher
+Zoe Targon
+Leona Targon
+Aphelios Targon
+Taric Targon
+Jarvan_IV Demacia Defender
+Sona Demacia Invoker
+Garen Demacia Defender
+Lux Demacia Arcanist
+Anivia Freljord Invoker
+Ashe Freljord Quickstriker
+Braum Freljord Warden
+Lissandra Freljord Invoker
+Milio Ixtal Invoker
+Neeko Ixtal Arcanist Defender
+Jinx Zaun Gunslinger
+Caitlyn Piltover Longshot
+Vi Piltover Zaun Defender
+Seraphine Piltover Disruptor
+Yasuo Ionia Slayer
+Ahri Ionia Arcanist
+Wukong Ionia Bruiser
+Shen Ionia Bruiser
+Malzahar Void Disruptor
+Rek'Sai Void Vanquisher
+Cho'Gath Void Juggernaut
+Kog'Maw Void Arcanist Longshot
+Annie Arcanist
+Ornn Warden
+Kindred Quickstriker
+Azir Shurima Disruptor
+Zilean Invoker
+Fiddlesticks Vanquisher
+Shyvana Juggernaut
+Galio Demacia
+Tahm_Kench Bilgewater Bruiser
+Sejuani Freljord Defender
+Sett Ionia
+Brock Ixtal
+T-Hex Piltover Gunslinger
+Bel'Veth Void Slayer
+Singed Zaun Juggernaut
+Aurelion_Sol Targon
+Veigar Yordle Arcanist
+Baron_Nashor Void
+Darius Noxus Defender
+Yone Ionia Slayer
+Warwick Zaun Quickstriker
+Fizz Bilgewater Yordle
+Poppy_ Demacia Yordle Juggernaut
+Kennen_ Ionia Yordle Defender
+Ziggs_ Zaun Yordle Longshot
+Aatrox_ Darkin Slayer
+Volibear_ Freljord Bruiser
+Jhin Ionia Gunslinger
+Sylas_ Arcanist Defender
+Nidalee_ Ixtal
+Tryndamere_ Freljord Slayer
+Rift_Herald_ Void Bruiser
+Mel_ Noxus Disruptor
+Graves_ Bilgewater Gunslinger
+Skarner_ Ixtal
+Diana_ Targon
+Kai'Sa_ Void Longshot
+Renekton_ Shurima
+Nasus_ Shurima
+Xerath_ Shurima
+Thresh_ Shadow_Isles Warden
+Gwen_ Shadow_Isles Disruptor
+Kalista_ Shadow_Isles Vanquisher
+LeBlanc_ Noxus Invoker
+Viego Shadow_Isles Quickstriker
+Ekko Zaun Disruptor
+Vayne Demacia Longshot
+Yunara Ionia Quickstriker
+Swain Noxus Arcanist Juggernaut
+Xin_Zhao Demacia Ionia Warden
+Yorick_ Shadow_Isles Warden
+Orianna_ Piltover Invoker
+Qiyana Ixtal Slayer
+Loris Piltover Warden
+Blitzcrank Zaun Juggernaut
+Dr_Mundo Zaun Bruiser
+Zaahen Darkin
+Tibbers Arcanist
+Lucian_&_Senna Gunslinger
+Kobuko_&_Yuumi Yordle Bruiser Invoker

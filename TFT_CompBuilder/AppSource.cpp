@@ -13,7 +13,7 @@
 #include "TeamComposition.h"
 using namespace std;
 
-#define SET "13"
+#define SET "16"
 #define CDRAGONJSON(set) ("TFTSetJSONs\\set" + set + ".json")
 #define LEGACYGUARD (stoi(SET) >= 8 && SET != "8.5")
 #define CHAMPINFOFILE(set) ("Set" + set + "ChampionInfo.txt")
@@ -63,7 +63,9 @@ int main() {
 		++count;
 	}
 
+	cout << endl << "Initializing statistics..." << endl;
 	TeamComposition::initializeStatics(setTraits, setChamps); //Uses data from the trait and champ maps to initialize TeamCompositions to be constructed and used
+	cout << "Getting champ graph..." << endl;
 	unordered_map<string, vector<string>> championGraph = TeamComposition::getChampGraph(); 
 
 	//Print championGraph map showing each champion's list of connected champs

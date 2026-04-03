@@ -161,6 +161,10 @@
     <Text Include="Set12TraitInfo.txt" />
     <Text Include="Set13ChampionInfo.txt" />
     <Text Include="Set13TraitInfo.txt" />
+    <Text Include="Set16ChampionInfo.txt" />
+    <Text Include="Set16TraitInfo.txt" />
+    <Text Include="Set17ChampionInfo.txt" />
+    <Text Include="Set17TraitInfo.txt" />
     <Text Include="Set7ChampionInfo.txt" />
     <Text Include="Set7TraitInfo.txt" />
     <Text Include="Set8.5ChampionInfo.txt" />
@@ -169,6 +173,8 @@
     <Text Include="Set8TraitInfo.txt" />
     <Text Include="LegacySet7ChampionInfo.txt" />
     <Text Include="LegacySet7TraitInfo.txt" />
+    <Text Include="Set9ChampionInfo.txt" />
+    <Text Include="Set9TraitInfo.txt" />
     <Text Include="SourceInput.txt" />
   </ItemGroup>
   <ItemGroup>
