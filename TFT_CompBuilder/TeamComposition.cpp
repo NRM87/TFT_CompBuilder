@@ -51,7 +51,7 @@ int TeamComposition::getActiveTraitTiersTotal() const {
 	for (int i = 0; i < currentSetTraits.size(); ++i) {
 		string trait = traitArrPosToStringMap[i];
 		int traitVal = compTraits[i];
-		vector<int> traitMilestones(currentSetTraits.at(trait));
+		const vector<int>& traitMilestones = currentSetTraits.at(trait);
 		//loop through milestones, add n to total where n is the last nth milestone that the trait is greater than
 		for (int j = 0; j < traitMilestones.size(); ++j) {
 			if (traitVal < traitMilestones.at(j)) { 
@@ -74,14 +74,16 @@ int TeamComposition::getActiveTraitsTotal() const {
 		string trait = traitArrPosToStringMap[i];
 		int traitVal = compTraits[i];
 		//count trait as active if the comp has an amount of trait greater than or equal to the first milestone of the trait
-		if (currentSetTraits.count(trait) == 0) throw runtime_error("Trait not found: " + trait);
-		if (traitVal >= currentSetTraits.at(trait).at(0)) ++total; 																					
+		const vector<int>& traitMilestones = currentSetTraits.at(trait);
+		if (traitVal >= traitMilestones.at(0)) ++total; 																					
 	}
 	return total;
 }
 
 bool TeamComposition::containsChamp(const string& champion) const {
-	return champions.test(champStringToBitPosMap.at(champion));
+	auto it = champStringToBitPosMap.find(champion);
+	if (it == champStringToBitPosMap.end()) return false;
+	return champions.test(it->second);
 }
 
 //Returns a string representation of the comp

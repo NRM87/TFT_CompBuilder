@@ -1,9 +1,10 @@
-#include "HelperFunctions.h"
+#include "CompBuilderUtils.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 #include <filesystem>
+#include <algorithm>
 #include "json.hpp"
 using namespace std;
 using json = nlohmann::json;
@@ -11,8 +12,6 @@ using json = nlohmann::json;
 #define SETINFODIR(set) ("SetInfos\\Set" + set)
 #define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
 #define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
-
-//TODO: add protection against traits not matching between champion and trait infos
 
 //Read champion information from text file into a map
 void readChampInfo(string fileName, unordered_map<string, Champion>& champions) {
@@ -70,6 +69,75 @@ void readTraitInfo(string fileName, unordered_map<string, vector<int>>& traits) 
 	}
 	line.clear();
 	traitInfo.close();
+}
+
+void validateSetData(const unordered_map<string, Champion>& champions, const unordered_map<string, vector<int>>& traits) {
+	vector<string> issues;
+
+	if (champions.empty()) issues.push_back("No champions were loaded from the champion info file.");
+	if (traits.empty()) issues.push_back("No traits were loaded from the trait info file.");
+	if (champions.size() > 128) {
+		issues.push_back("Loaded " + to_string(champions.size()) + " champions, but TeamComposition only supports up to 128.");
+	}
+	if (traits.size() > 32) {
+		issues.push_back("Loaded " + to_string(traits.size()) + " traits, but TeamComposition only supports up to 32.");
+	}
+
+	for (const auto& [champName, champion] : champions) {
+		if (champName.empty()) {
+			issues.push_back("Found a champion entry with an empty name.");
+			continue;
+		}
+
+		for (const auto& [traitName, traitValue] : champion.getTraitMap()) {
+			if (traitName.empty()) {
+				issues.push_back("Champion \"" + champName + "\" has an empty trait name.");
+				continue;
+			}
+			if (!traits.contains(traitName)) {
+				issues.push_back(
+					"Champion \"" + champName + "\" uses trait \"" + traitName + "\" but that trait is missing from the trait info file."
+				);
+			}
+			if (traitValue <= 0) {
+				issues.push_back(
+					"Champion \"" + champName + "\" has non-positive value " + to_string(traitValue) + " for trait \"" + traitName + "\"."
+				);
+			}
+		}
+	}
+
+	for (const auto& [traitName, milestones] : traits) {
+		if (traitName.empty()) {
+			issues.push_back("Found a trait entry with an empty name.");
+			continue;
+		}
+		if (milestones.empty()) {
+			issues.push_back("Trait \"" + traitName + "\" has no milestones.");
+			continue;
+		}
+		for (int milestone : milestones) {
+			if (milestone <= 0) {
+				issues.push_back("Trait \"" + traitName + "\" has non-positive milestone " + to_string(milestone) + ".");
+			}
+		}
+		if (!is_sorted(milestones.begin(), milestones.end())) {
+			issues.push_back("Trait \"" + traitName + "\" has milestones that are not sorted in ascending order.");
+		}
+	}
+
+	if (!issues.empty()) {
+		ostringstream message;
+		message << "Set data validation failed. Fix the champion/trait info files before generating compositions.";
+		int issuesToPrint = min((int)issues.size(), 8);
+		for (int i = 0; i < issuesToPrint; ++i) {
+			message << "\n- " << issues[i];
+		}
+		if (issues.size() > issuesToPrint) {
+			message << "\n- ...and " << (issues.size() - issuesToPrint) << " more issue(s).";
+		}
+		throw runtime_error(message.str());
+	}
 }
 
 string underscore(string str) {

@@ -143,14 +143,14 @@
     <ClCompile Include="AppSource.cpp" />
     <ClCompile Include="Champion.cpp" />
     <ClCompile Include="TeamComposition.cpp" />
-    <ClCompile Include="HelperFunctions.cpp" />
+    <ClCompile Include="CompBuilderUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Champion.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="TeamComposition.h" />
-    <ClInclude Include="HelperFunctions.h" />
+    <ClInclude Include="CompBuilderUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="SetInfos\Set10\ChampionInfo.txt" />

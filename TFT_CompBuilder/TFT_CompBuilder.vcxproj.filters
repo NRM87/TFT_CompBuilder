@@ -27,7 +27,7 @@
     <ClCompile Include="Champion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HelperFunctions.cpp">
+    <ClCompile Include="CompBuilderUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TeamComposition.cpp">
@@ -38,7 +38,7 @@
     <ClInclude Include="Champion.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="HelperFunctions.h">
+    <ClInclude Include="CompBuilderUtils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="TeamComposition.h">
