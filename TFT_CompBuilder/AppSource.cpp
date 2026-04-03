@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <ctime>
+#include <chrono>
 #include "Champion.h"
 #include "CompBuilderUtils.h"
 #include "TeamComposition.h"
@@ -150,6 +151,7 @@ int main() {
 			}
 
 			cout << "Recalculating gate file..." << endl;
+			auto gateRecalculationStart = std::chrono::steady_clock::now();
 			GateTable recalculatedGates = TeamComposition::calculateGateTable(
 				recalculateFromScratch,
 				gateTimeoutSeconds,
@@ -158,7 +160,10 @@ int main() {
 				settings[2] != 0
 			);
 			writeGateTable(set, recalculatedGates);
-			cout << "Gate recalculation complete." << endl;
+			double gateRecalculationSeconds = std::chrono::duration<double>(
+				std::chrono::steady_clock::now() - gateRecalculationStart
+			).count();
+			cout << "Gate recalculation complete. Elapsed time: " << gateRecalculationSeconds << " seconds." << endl;
 		}
 
 		cout << endl << "Generating team compositions...";

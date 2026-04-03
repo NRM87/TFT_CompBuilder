@@ -34,6 +34,3 @@ private:
 	string name;
 	map<string, int> traits;
 };
-
-
-

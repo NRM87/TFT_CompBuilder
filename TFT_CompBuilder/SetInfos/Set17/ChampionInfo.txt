@@ -31,7 +31,9 @@ Maokai N.O.V.A. Brawler
 Master_Yi Psionic Marauder
 Meepsie Meeple Shepherd Voyager
 Milio Timebreaker Fateweaver
-Miss_Fortune Challenger Channeler Replicator
+Miss_Fortune_Challenger Challenger
+Miss_Fortune_Replicator Replicator
+Miss_Fortune_Channeler Channeler
 Mordekaiser Dark_Star Channeler Vanguard
 Nami Space_Groove Replicator
 Nasus Space_Groove Vanguard
