@@ -1,0 +1,58 @@
+Aatrox N.O.V.A. Bastion
+Akali N.O.V.A. Marauder
+Aurelion_Sol Mecha Channeler
+Aurora Anima Voyager
+Bard Meeple Channeler
+Belveth Primordian Challenger Marauder
+Blitzcrank Space_Groove Vanguard
+Briar Anima Primordian Rogue
+Caitlyn N.O.V.A. Fateweaver
+Chogath Dark_Star Brawler
+Corki Meeple Fateweaver
+Diana Arbiter Challenger
+Ezreal Timebreaker Sniper
+Fiora Anima Marauder
+Fizz Meeple Rogue
+Gnar Meeple Sniper
+Gragas Psionic Brawler
+Gwen Space_Groove Rogue
+Illaoi Anima Shepherd Vanguard
+Jax Stargazer Bastion
+Jhin Dark_Star Sniper
+Jinx Anima Challenger
+Kaisa Dark_Star Rogue
+Karma Dark_Star Voyager
+Kindred N.O.V.A. Challenger
+Leblanc Arbiter Shepherd
+Leona Arbiter Vanguard
+Lissandra Dark_Star Replicator Shepherd
+Lulu Stargazer Replicator
+Maokai N.O.V.A. Brawler
+Master_Yi Psionic Marauder
+Meepsie Meeple Shepherd Voyager
+Milio Timebreaker Fateweaver
+Miss_Fortune Challenger Channeler Replicator
+Mordekaiser Dark_Star Channeler Vanguard
+Nami Space_Groove Replicator
+Nasus Space_Groove Vanguard
+Nunu Stargazer Vanguard
+Ornn Space_Groove Bastion
+Pantheon Timebreaker Brawler Replicator
+Poppy Meeple Bastion
+Pyke Psionic Voyager
+Rammus Meeple Bastion
+RekSai Primordian Brawler
+Riven Timebreaker Rogue
+Samira Space_Groove Sniper
+Shen Bastion
+Sona Psionic Shepherd
+Tahm_Kench Brawler
+Talon Stargazer Rogue
+Teemo Space_Groove Shepherd
+The_Mighty_Mech Mecha Voyager
+Twisted_Fate Stargazer Fateweaver
+Urgot Mecha Brawler Marauder
+Veigar Meeple Replicator
+Viktor Psionic Channeler
+Xayah Stargazer Sniper
+Zoe Arbiter Channeler

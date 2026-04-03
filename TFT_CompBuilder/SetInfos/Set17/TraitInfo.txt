@@ -1,0 +1,23 @@
+Anima 3 6
+Arbiter 2 3
+Dark_Star 2 4 6 9
+Mecha 3 4 6
+Meeple 3 5 7 10
+N.O.V.A. 2 5
+Primordian 2 3
+Psionic 2 4
+Space_Groove 3 5 7 10
+Stargazer 3
+Timebreaker 2 3 4
+Bastion 2 4 6
+Brawler 2 4 6
+Challenger 2 3 4 5
+Channeler 2 3 4 5
+Fateweaver 2 4
+Marauder 2 4 6
+Replicator 2 4
+Rogue 2 3 4 5
+Shepherd 3 5 7
+Sniper 2 3 4 5
+Vanguard 2 4 6
+Voyager 2 3 4 5 6

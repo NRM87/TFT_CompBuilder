@@ -1,4 +1,5 @@
 #include "CompBuilderUtils.h"
+#include "TeamComposition.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -12,6 +13,8 @@ using json = nlohmann::json;
 #define SETINFODIR(set) ("SetInfos\\Set" + set)
 #define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
 #define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
+#define GATEINFOFILE(set) (SETINFODIR(set) + "\\Gates.json")
+#define TEMPGATEINFOFILE(set) (SETINFODIR(set) + "\\Gates.json.tmp")
 
 //Read champion information from text file into a map
 void readChampInfo(string fileName, unordered_map<string, Champion>& champions) {
@@ -137,6 +140,69 @@ void validateSetData(const unordered_map<string, Champion>& champions, const uno
 			message << "\n- ...and " << (issues.size() - issuesToPrint) << " more issue(s).";
 		}
 		throw runtime_error(message.str());
+	}
+}
+
+GateTable readGateTable(const string& setNum) {
+	ifstream gateInfo(GATEINFOFILE(setNum));
+	if (!gateInfo.is_open()) {
+		throw runtime_error("Could Not Open Gate File: " + GATEINFOFILE(setNum));
+	}
+
+	json gateJson = json::parse(gateInfo);
+	GateTable gates;
+	gates.activeTraitGates = gateJson.at("active_trait_gates").get<decltype(gates.activeTraitGates)>();
+	gates.activeTierGates = gateJson.at("active_tier_gates").get<decltype(gates.activeTierGates)>();
+	return gates;
+}
+
+void writeGateTable(const string& setNum, const GateTable& gates) {
+	std::filesystem::create_directories(SETINFODIR(setNum));
+	string gateFileName = GATEINFOFILE(setNum);
+	string tempGateFileName = TEMPGATEINFOFILE(setNum);
+	ofstream gateInfo(tempGateFileName);
+	if (!gateInfo.is_open()) {
+		throw runtime_error("Could Not Open Gate Temp File For Writing: " + tempGateFileName);
+	}
+
+	gateInfo << "{\n";
+	gateInfo << "  \"generator_version\": 1,\n";
+	gateInfo << "  \"active_trait_gates\": [\n";
+	for (int row = 0; row < GateTable::SIZE; ++row) {
+		gateInfo << "    [";
+		for (int col = 0; col < GateTable::SIZE; ++col) {
+			if (col > 0) gateInfo << ", ";
+			gateInfo << gates.activeTraitGates[row][col];
+		}
+		gateInfo << "]";
+		if (row + 1 < GateTable::SIZE) gateInfo << ",";
+		gateInfo << "\n";
+	}
+	gateInfo << "  ],\n";
+	gateInfo << "  \"active_tier_gates\": [\n";
+	for (int row = 0; row < GateTable::SIZE; ++row) {
+		gateInfo << "    [";
+		for (int col = 0; col < GateTable::SIZE; ++col) {
+			if (col > 0) gateInfo << ", ";
+			gateInfo << gates.activeTierGates[row][col];
+		}
+		gateInfo << "]";
+		if (row + 1 < GateTable::SIZE) gateInfo << ",";
+		gateInfo << "\n";
+	}
+	gateInfo << "  ]\n";
+	gateInfo << "}\n";
+	gateInfo.close();
+
+	std::error_code fsError;
+	std::filesystem::rename(tempGateFileName, gateFileName, fsError);
+	if (fsError) {
+		std::filesystem::remove(gateFileName, fsError);
+		fsError.clear();
+		std::filesystem::rename(tempGateFileName, gateFileName, fsError);
+		if (fsError) {
+			throw runtime_error("Could Not Replace Gate File: " + gateFileName + " (" + fsError.message() + ")");
+		}
 	}
 }
 

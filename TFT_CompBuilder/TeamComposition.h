@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <bitset>
 #include "Champion.h"
+#include "CompBuilderUtils.h"
 using namespace std;
 using ChampSet = bitset<128>;
 
@@ -40,6 +41,9 @@ public:
 	static vector<TeamComposition> generateComps(int compSize, int traitSettings[3]); //returns a list of comps based on a target comp size and settings
 	static vector<TeamComposition> generateComps(int compSize); //calls default settings of generateComps
 	static unordered_map<string, vector<string>> getChampGraph() { return championGraph; }; 
+	static void setGateTable(const GateTable& gateTable);
+	static GateTable getGateTable() { return currentGateTable; }
+	static GateTable calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, bool connectedChampsOnly = false);
 
 	//Static mutators
 	//Initializes the static variables based on a trait-traitMilestone map and a name-Champion map
@@ -57,6 +61,7 @@ private:
 			return hash<ChampSet>()(champs);
 		}
 	};
+	using CompSet = unordered_set<TeamComposition, teamCompHash>;
 
 	//Object fields
 	//There shouldn't be more than 32 traits, and values for compSize and any compTraits[n] should never exceed 128 based on typical Teamfight Tactics numbers
@@ -67,10 +72,6 @@ private:
 
 	static bool initialized; //keeps track of if static fields have been properly initialized
 	static const int MAX_COMP_SIZE = 10; //maximum comp size for generateComps algorithm
-
-	//gates for pruning incremental sizes of comps during generateComps algorithm
-	static const int ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE]; 
-	static const int ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE];
 
 	//Sets of champions that have a certain trait. In 64bit form to easily operate with comp objects.
 	static ChampSet dragons; 
@@ -90,8 +91,11 @@ private:
 	static string champBitPosToStringMap[];
 	static unordered_map<string, short> traitStringToArrPosMap;
 	static string traitArrPosToStringMap[];
+	static GateTable currentGateTable;
+	static bool gateTableInitialized;
 
 	bool addChamp(int champBitPos);
+	static CompSet buildNextCompSet(const CompSet& compSet, int targetCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds = -1.0, bool* timedOut = nullptr);
 
 	/* OLD COMP-GENERATING ALGORITHM FUNCTIONS
 	static vector<TeamCompositionLite> getTeamCompList(int compSize); 

@@ -1,35 +1,13 @@
 #include "TeamComposition.h"
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
+#include <chrono>
+#include <limits>
 using namespace std;
 
-//Construct static fields:
-//Gates determine how many traits or trait tiers (depending on settings) a comp needs at each size during their building in generateComps
-//For runtime efficiency, gates eliminate generated comps that do not have enough traits or tiers to reach the target amount of the last gate of the target size.
-//The values of the gates were determined experimentally, with them being the max value that will still ensure all comps of the last gate size will make it to the end.
-const int TeamComposition::ACTIVE_TRAIT_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitsTotal
-	{1,0,0,0,0,0,0,0,0,0},
-	{1,2,0,0,0,0,0,0,0,0},
-	{1,2,3,0,0,0,0,0,0,0},
-	{1,2,3,4,0,0,0,0,0,0},
-	{1,2,3,4,5,0,0,0,0,0},
-	{1,2,3,4,5,7,0,0,0,0},
-	{1,2,3,4,5,7,8,0,0,0},
-	{1,2,3,4,5,7,8,9,0,0},
-	{1,2,3,4,5,7,8,9,10,0}, 
-	{1,2,3,4,5,7,8,9,10,12}};
-const int TeamComposition::ACTIVE_TIER_GATES[MAX_COMP_SIZE][MAX_COMP_SIZE] = { //gates for when counting based on getActiveTraitTiersTotal
-	{1,0,0,0,0,0,0,0,0,0},
-	{1,2,0,0,0,0,0,0,0,0},
-	{1,2,3,0,0,0,0,0,0,0},
-	{1,2,3,4,0,0,0,0,0,0},
-	{1,2,3,4,5,0,0,0,0,0},
-	{1,2,3,4,5,6,0,0,0,0},
-	{1,2,3,4,5,6,7,0,0,0},
-	{1,2,3,4,5,6,7,8,0,0},
-	{0,1,2,3,5,6,7,8,10,0},
-	{0,1,2,3,5,6,7,8,10,11}};
 bool TeamComposition::initialized = false;
+bool TeamComposition::gateTableInitialized = false;
 ChampSet TeamComposition::dragons = 0;
 ChampSet TeamComposition::scalescorns = 0;
 unordered_map<string, Champion> TeamComposition::globalChampInfoMap;
@@ -43,6 +21,12 @@ unordered_map<string, short> TeamComposition::traitStringToArrPosMap;
 short TeamComposition::champWidthByBitPos[128];
 ChampSet TeamComposition::championConnectionsByBitPos[128];
 vector<TeamComposition::TraitDelta> TeamComposition::champTraitDeltasByBitPos[128];
+GateTable TeamComposition::currentGateTable;
+
+void TeamComposition::setGateTable(const GateTable& gateTable) {
+	currentGateTable = gateTable;
+	gateTableInitialized = true;
+}
 
 //Returns the amount of active trait tiers
 int TeamComposition::getActiveTraitTiersTotal() const {
@@ -120,6 +104,53 @@ bool TeamComposition::addChamp(int champBitPos) {
 	return true;
 }
 
+TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSet, int targetCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds, bool* timedOut) {
+	const int champCount = (int)globalChampInfoMap.size();
+	CompSet nextCompSet;
+	currTraitValMax = 0;
+	auto iterationStart = std::chrono::steady_clock::now();
+	if (timedOut) *timedOut = false;
+
+	for (const TeamComposition& currComp : compSet) {
+		ChampSet connections;
+		if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
+		else connections = ~currComp.champions; //consider every champ not in the current comp already
+
+		for (int i = 0; i < champCount; ++i) {
+			if (timeoutSeconds >= 0.0) {
+				elapsedSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - iterationStart).count();
+				if (elapsedSeconds > timeoutSeconds) {
+					if (timedOut) *timedOut = true;
+					return nextCompSet;
+				}
+			}
+
+			bool champConnected = connections.test(i); //if champ is supposed to be considered
+			bool champFits = champWidthByBitPos[i] <= (targetCompSize - currComp.compSize); // for set 7 dragons
+			if (!champConnected || !champFits) continue;
+
+			TeamComposition nextComp(currComp);
+			nextComp.addChamp(i);
+
+			if (!settings[0]) {
+				int traitValue = (settings[1] == 1 ? nextComp.getActiveTraitTiersTotal() : nextComp.getActiveTraitsTotal());
+				if (traitValue > currTraitValMax) currTraitValMax = traitValue;
+				if (settings[1] == 2) {
+					if (traitValue < prevTraitValMax + 1) continue;
+				}
+				else if (traitValue < gateBound) {
+					continue;
+				}
+			}
+
+			nextCompSet.emplace(nextComp);
+		}
+	}
+
+	elapsedSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - iterationStart).count();
+	return nextCompSet;
+}
+
 //Generates and returns a list of comps given a target comp size and list of settings
 //settings[] guide: 
 //  settings[0] - use pruning or not
@@ -131,77 +162,29 @@ bool TeamComposition::addChamp(int champBitPos) {
 //  Use tier gates, not trait gates - {0,1,0}
 //  Use dynamic pruning - {0,2,0}
 vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3]) {
-	if (compSize > 10 || compSize < 1) throw runtime_error("generateComps must have parameter compSize between 1 and 9 (inclusive).");
-
-	//Pick what gates to use based on settings[1]
-	const int(*GATES)[10][10];
-	if (settings[1]) GATES = &ACTIVE_TIER_GATES;
-	else GATES = &ACTIVE_TRAIT_GATES;
-	const int champCount = (int)globalChampInfoMap.size();
+	if (compSize > 10 || compSize < 1) throw runtime_error("generateComps must have parameter compSize between 1 and 10 (inclusive).");
+	if (!settings[0] && settings[1] != 2 && !gateTableInitialized) throw runtime_error("Gate table not initialized.");
 
 	int currCompSize = 0;
-	unordered_set<TeamComposition, teamCompHash> compSet; //holds the previous while loop iteration's generated comps
+	CompSet compSet; //holds the previous while loop iteration's generated comps
 	compSet.emplace(TeamComposition());
-	unordered_set<TeamComposition, teamCompHash> nextCompSet; //holds newly generated comps for the next while loop iteration
 
 	int prevTraitValMax = 0;
 	int currTraitValMax = 0;
+	double elapsedSeconds = 0.0;
 
 	//BFS over comps
 	while (currCompSize < compSize) { 
 		++currCompSize;
-		currTraitValMax = 0;
-
-		for (const TeamComposition& currComp : compSet) { 
-			//if (currComp.compSize < currCompSize) { //skip comps that are already too big for this iteration (for set 7 dragons)
-			//Pick what champs will be considered when generating the next-sized comps
-			ChampSet connections;
-			if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
-			else connections = ~currComp.champions; //consider every champ not in the current comp already
-
-			// TODO: multi-thread this, make nextCompSet thread safe:
-			//iterates for each champ that could be added to the comp
-			for (int i = 0; i < champCount; ++i) {
-				bool champConnected = connections.test(i); //if champ is supposed to be considered
-				bool champFits = champWidthByBitPos[i] <= (compSize - currComp.compSize); // for set 7 dragons
-				if (!champConnected || !champFits ) continue;
-
-				//Generates a new comp from a comp generated from last while loop iteration and a new champ that passes the above if-statement
-				TeamComposition nextComp(currComp);
-				nextComp.addChamp(i);
-
-				//Set 7 conditions
-				//long long nextCompDragons = (dragons & nextComp.champions);
-				//bool hasAtMostOneDragon = !((nextCompDragons & (nextCompDragons - 1)) && nextCompDragons);
-				//bool hasDragonAndScalescorn = (dragons & nextComp.champions) && (scalescorns & nextComp.champions);
-
-				if (!settings[0]) {
-					int traitValue = (settings[1] == 1 ? nextComp.getActiveTraitTiersTotal() : nextComp.getActiveTraitsTotal());
-					if (settings[1] == 2) {
-						// dynamic pruning
-						if (traitValue < prevTraitValMax + 1) continue;
-						if (traitValue > currTraitValMax) currTraitValMax = traitValue;
-					}
-					else {
-						// gate pruning
-						bool hasSufficientTraits = (traitValue >= (*GATES)[compSize - 1][nextComp.compSize - 1]);
-						if (!hasSufficientTraits) continue;
-					}
-						
-				}
-
-				//If the generated comp passes the above if-statement, send it to the next round of building and pruning.
-				nextCompSet.emplace(nextComp);
-			}
-			//saves the comp for the next iteration of the while loop if it was too big for this iteration but smaller than the final target comp size (for set 7 dragons)
-			//else if (currComp.compSize <= compSize) {
-			//	nextCompSet.emplace(currComp); 
-			//}
+		int gateBound = 0;
+		if (!settings[0] && settings[1] != 2) {
+			gateBound = (settings[1] == 1
+				? currentGateTable.activeTierGates[compSize - 1][currCompSize - 1]
+				: currentGateTable.activeTraitGates[compSize - 1][currCompSize - 1]);
 		}
+		CompSet nextCompSet = buildNextCompSet(compSet, compSize, settings, gateBound, prevTraitValMax, currTraitValMax, elapsedSeconds);
 		prevTraitValMax = currTraitValMax;
-		//sets compSet to nextCompSet so the process can be repeated in the next iteration of the while loop
-		compSet = nextCompSet; 
-		nextCompSet.clear();
+		compSet.swap(nextCompSet);
 	}
 
 	//copy final set of comps to a list
@@ -216,6 +199,199 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 vector<TeamComposition> TeamComposition::generateComps(int compSize) {
 	int traitSettings[3] = { 0,0,0 };
 	return generateComps(compSize, traitSettings);
+}
+
+GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, bool connectedChampsOnly) {
+	if (!initialized) throw runtime_error("TeamComposition statics not initialized.");
+	if (timeoutSeconds < 1) throw runtime_error("Gate calculation timeout must be at least 1 second.");
+	if (!recalculateFromScratch && !gateTableInitialized) throw runtime_error("Gate table not initialized.");
+	if (maxTargetCompSize < 1 || maxTargetCompSize > MAX_COMP_SIZE) {
+		throw runtime_error("Gate calculation target size must be between 1 and " + to_string(MAX_COMP_SIZE) + ".");
+	}
+	if (pruningMode != 0 && pruningMode != 1) {
+		throw runtime_error("Gate calculation pruning mode must be 0 (trait gates) or 1 (tier gates).");
+	}
+
+	GateTable calculatedGates = gateTableInitialized ? currentGateTable : GateTable{};
+
+	for (int targetCompSize = 1; targetCompSize <= maxTargetCompSize; ++targetCompSize) {
+		CompSet compSet;
+		compSet.emplace(TeamComposition());
+		int prevTraitValMax = 0;
+		int scratchStartGate = 0;
+		if (recalculateFromScratch && targetCompSize > 1) {
+			scratchStartGate = (pruningMode == 1)
+				? calculatedGates.activeTierGates[targetCompSize - 2][targetCompSize - 2]
+				: calculatedGates.activeTraitGates[targetCompSize - 2][targetCompSize - 2];
+		}
+		int previousAcceptedGate = scratchStartGate;
+
+		for (int iterationCompSize = 1; iterationCompSize <= targetCompSize; ++iterationCompSize) {
+			int settings[3] = { 0, pruningMode, connectedChampsOnly ? 1 : 0 };
+			int gateBound = recalculateFromScratch
+				? previousAcceptedGate
+				: max(0, pruningMode == 1
+					? currentGateTable.activeTierGates[targetCompSize - 1][iterationCompSize - 1]
+					: currentGateTable.activeTraitGates[targetCompSize - 1][iterationCompSize - 1]);
+			int highestSlowBound = -1;
+			int lowestEmptyBound = std::numeric_limits<int>::max();
+			int weakestSuccessGate = -1;
+			int weakestSuccessTraitValue = 0;
+			CompSet weakestSuccessCompSet;
+
+			while (true) {
+				int currentLayerMaxTraitValue = 0;
+				double currentLayerElapsedSeconds = 0.0;
+				CompSet nextCompSet = buildNextCompSet(compSet, targetCompSize, settings, gateBound, prevTraitValMax, currentLayerMaxTraitValue, currentLayerElapsedSeconds);
+				cout << "Gate calc | mode=" << pruningMode
+					<< " target=" << targetCompSize
+					<< " iter=" << iterationCompSize
+					<< " gate=" << gateBound
+					<< " frontier_elapsed=" << currentLayerElapsedSeconds << "s"
+					<< " frontier_comps=" << nextCompSet.size();
+
+				if (nextCompSet.empty()) {
+					cout << " result=empty_frontier" << endl;
+					lowestEmptyBound = min(lowestEmptyBound, gateBound);
+					if (weakestSuccessGate >= 0) {
+						if (gateBound < weakestSuccessGate) {
+							int acceptedGate = (iterationCompSize == targetCompSize) ? weakestSuccessTraitValue : weakestSuccessGate;
+							if (pruningMode == 1) calculatedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+							else calculatedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+							compSet.swap(weakestSuccessCompSet);
+							prevTraitValMax = weakestSuccessTraitValue;
+							previousAcceptedGate = weakestSuccessGate;
+							break;
+						}
+						if (highestSlowBound + 1 >= weakestSuccessGate) {
+							int acceptedGate = (iterationCompSize == targetCompSize) ? weakestSuccessTraitValue : weakestSuccessGate;
+							if (pruningMode == 1) calculatedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+							else calculatedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+							compSet.swap(weakestSuccessCompSet);
+							prevTraitValMax = weakestSuccessTraitValue;
+							previousAcceptedGate = weakestSuccessGate;
+							break;
+						}
+						gateBound = highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2);
+						continue;
+					}
+
+					if (gateBound == 0) {
+						throw runtime_error(
+							"Unable to find a non-empty gate for pruning mode " + to_string(pruningMode) +
+							", target size " + to_string(targetCompSize) +
+							", iteration size " + to_string(iterationCompSize) + "."
+						);
+					}
+					gateBound = max(0, gateBound - 1);
+					continue;
+				}
+
+				if (iterationCompSize < targetCompSize) {
+					int probeMaxTraitValue = 0;
+					double probeElapsedSeconds = 0.0;
+					bool timedOut = false;
+					CompSet probeCompSet = buildNextCompSet(nextCompSet, targetCompSize, settings, 0, currentLayerMaxTraitValue, probeMaxTraitValue, probeElapsedSeconds, (double)timeoutSeconds, &timedOut);
+					cout << " probe_elapsed=" << probeElapsedSeconds << "s"
+						<< " probe_comps=" << probeCompSet.size();
+
+					if (timedOut) {
+						cout << " result=timeout" << endl;
+						highestSlowBound = max(highestSlowBound, gateBound);
+						if (weakestSuccessGate >= 0) {
+							if (highestSlowBound + 1 >= weakestSuccessGate) {
+								int acceptedGate = weakestSuccessGate;
+								if (pruningMode == 1) calculatedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+								else calculatedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+								compSet.swap(weakestSuccessCompSet);
+								prevTraitValMax = weakestSuccessTraitValue;
+								previousAcceptedGate = weakestSuccessGate;
+								break;
+							}
+							gateBound = highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2);
+							continue;
+						}
+						if (lowestEmptyBound != std::numeric_limits<int>::max() && highestSlowBound + 1 >= lowestEmptyBound) {
+							throw runtime_error(
+								"Unable to satisfy timeout while keeping non-empty results for pruning mode " + to_string(pruningMode) +
+								", target size " + to_string(targetCompSize) +
+								", iteration size " + to_string(iterationCompSize) + "."
+							);
+						}
+						gateBound = (lowestEmptyBound == std::numeric_limits<int>::max())
+							? gateBound + 1
+							: highestSlowBound + max(1, (lowestEmptyBound - highestSlowBound) / 2);
+						continue;
+					}
+
+					if (probeCompSet.empty()) {
+						cout << " result=empty_probe" << endl;
+						lowestEmptyBound = min(lowestEmptyBound, gateBound);
+						if (weakestSuccessGate >= 0) {
+							if (gateBound < weakestSuccessGate) {
+								int acceptedGate = weakestSuccessGate;
+								if (pruningMode == 1) calculatedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+								else calculatedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+								compSet.swap(weakestSuccessCompSet);
+								prevTraitValMax = weakestSuccessTraitValue;
+								previousAcceptedGate = weakestSuccessGate;
+								break;
+							}
+							if (highestSlowBound + 1 >= weakestSuccessGate) {
+								int acceptedGate = weakestSuccessGate;
+								if (pruningMode == 1) calculatedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+								else calculatedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+								compSet.swap(weakestSuccessCompSet);
+								prevTraitValMax = weakestSuccessTraitValue;
+								previousAcceptedGate = weakestSuccessGate;
+								break;
+							}
+							gateBound = highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2);
+							continue;
+						}
+
+						if (gateBound == 0) {
+							throw runtime_error(
+								"Unable to find a gate that preserves a non-empty next iteration for pruning mode " + to_string(pruningMode) +
+								", target size " + to_string(targetCompSize) +
+								", iteration size " + to_string(iterationCompSize) + "."
+							);
+						}
+						gateBound = max(0, gateBound - 1);
+						continue;
+					}
+
+					cout << " result=success" << endl;
+				}
+				else {
+					cout << " result=success" << endl;
+				}
+
+				if (weakestSuccessGate < 0 || gateBound < weakestSuccessGate) {
+					weakestSuccessGate = gateBound;
+					weakestSuccessTraitValue = currentLayerMaxTraitValue;
+					weakestSuccessCompSet.swap(nextCompSet);
+				}
+
+				if (weakestSuccessGate == 0 || highestSlowBound + 1 >= weakestSuccessGate) {
+					int acceptedGate = (iterationCompSize == targetCompSize) ? weakestSuccessTraitValue : weakestSuccessGate;
+					if (pruningMode == 1) calculatedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+					else calculatedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
+					compSet.swap(weakestSuccessCompSet);
+					prevTraitValMax = weakestSuccessTraitValue;
+					previousAcceptedGate = weakestSuccessGate;
+					break;
+				}
+
+				gateBound = (highestSlowBound >= 0)
+					? highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2)
+					: weakestSuccessGate - 1;
+			}
+		}
+	}
+
+	setGateTable(calculatedGates);
+	return calculatedGates;
 }
 
 //Properly initializes static fields. Specifically:

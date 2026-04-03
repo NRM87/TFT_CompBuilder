@@ -13,23 +13,38 @@
 #include "TeamComposition.h"
 using namespace std;
 
-#define SET "16"
+#define SET "17"
 #define CDRAGONJSON(set) ("TFTSetJSONs\\set" + set + ".json")
 #define LEGACYGUARD (stoi(SET) >= 8 && SET != "8.5")
 #define SETINFODIR(set) ("SetInfos\\Set" + set)
 #define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
 #define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
 #define USINGINPUTFILE 1 //1 if using "SourceInput.txt" as input; 0 if using std::cin
+#define DEFAULT_GATE_TIMEOUT_SECONDS 10
 
 int main() {
 	try {
 		string set = SET;
 		ifstream input("SourceInput.txt");
+		istream& in = USINGINPUTFILE ? static_cast<istream&>(input) : static_cast<istream&>(cin);
+		auto readToken = [&](const string& context) -> string {
+			string value;
+			if (!(in >> value)) {
+				throw runtime_error("Failed reading " + context + (USINGINPUTFILE ? " from SourceInput.txt." : " from standard input."));
+			}
+			return value;
+		};
+		auto readInt = [&](const string& context) -> int {
+			int value = 0;
+			if (!(in >> value)) {
+				throw runtime_error("Failed reading integer for " + context + (USINGINPUTFILE ? " from SourceInput.txt." : " from standard input."));
+			}
+			return value;
+		};
 
 		cout << "Welcome to the Set " << SET << " team composition generator!" << endl;
-		cout << "Would you like to update the current set information (\"y\"/\"n\")? (If info text files are not up to date.)" << endl;
-		string ans;
-		USINGINPUTFILE ? input >> ans : cin >> ans;
+		cout << "Would you like to update the current set information by parsing the CDragon JSON (\"y\"/\"n\")? (If info text files are not up to date.)" << endl;
+		string ans = readToken("set update choice");
 		if (ans == "y" && LEGACYGUARD) {
 			cout << "Parsing cdragon json..." << endl;
 			parseCDragon(CDRAGONJSON(set), SET);
@@ -52,6 +67,7 @@ int main() {
 		unordered_map<string, vector<int>> setTraits; //map of trait names and their corresponding milestone values
 		readTraitInfo(TRAITINFOFILE(set), setTraits); //fills setTraits with info from SetTraitInfo text file
 		validateSetData(setChamps, setTraits);
+		TeamComposition::setGateTable(readGateTable(set));
 
 		//Print list of traits and their milestones
 		cout << endl << "Traits:" << endl;
@@ -89,15 +105,11 @@ int main() {
 			++count;
 		}
 
-		//calculate new trait gates for algorithm (opitional)
-		//cout << endl << "Do you want to update algorithm trait gates?" << endl;
-		//TODO: implement automatic trait gate updating
-
 
 		//user input for settings and target comp size to be generated
 		int settings[3] = { 0,0,0 };
 		cout << endl << "Do you want to change the default settings? (\"y\"/\"n\")." << endl;
-		USINGINPUTFILE ? input >> ans : cin >> ans;
+		ans = readToken("settings change choice");
 		if (ans == "y") {
 			cout << "Enter the settings to generate the team compositions:" << endl;
 			cout << "Enter 3 numbers, each either 0 or 1, separated by a space." << endl; 
@@ -105,13 +117,50 @@ int main() {
 			cout << "If the second number is 0, unique active traits are considered, active trait tiers if 1." << endl;
 			cout << "If the third number is 0, all champs are considered while building comps, only champions sharing a trait if 1." << endl;
 			for (int i = 0; i < 3; ++i) {
-				USINGINPUTFILE ? input >> settings[i] : cin >> settings[i];
+				settings[i] = readInt("settings[" + to_string(i) + "]");
+				if (settings[i] != 0 && settings[i] != 1) {
+					throw runtime_error("Invalid value for settings[" + to_string(i) + "]. Expected 0 or 1.");
+				}
 			}
 		}
 		
 		int compositionSize = 1;
-		cout << endl << "What size comp would you like to find? (Enter an integer between 1 and 9 (inclusive)): ";
-		USINGINPUTFILE ? input >> compositionSize : cin >> compositionSize;
+		cout << endl << "What size comp would you like to find? (Enter an integer between 1 and 10 (inclusive)): ";
+		compositionSize = readInt("composition size");
+		if (compositionSize < 1 || compositionSize > 10) {
+			throw runtime_error("Composition size must be between 1 and 10.");
+		}
+
+		cout << endl << "Do you want to recalculate this set's gate file up to the selected comp size and pruning mode? (\"y\"/\"n\")." << endl;
+		ans = readToken("gate recalculation choice");
+		if (ans == "y") {
+			if (settings[1] != 0 && settings[1] != 1) {
+				throw runtime_error("Gate recalculation requires pruning mode 0 (trait gates) or 1 (tier gates).");
+			}
+
+			cout << "Should gate recalculation start from scratch instead of the current gate file? (\"y\"/\"n\")." << endl;
+			string recalcFromScratchAnswer = readToken("recalculate-from-scratch choice");
+			bool recalculateFromScratch = (recalcFromScratchAnswer == "y");
+
+			int gateTimeoutSeconds = DEFAULT_GATE_TIMEOUT_SECONDS;
+			cout << "Enter the gate recalculation timeout per iteration in seconds (default " << DEFAULT_GATE_TIMEOUT_SECONDS << "): " << endl;
+			gateTimeoutSeconds = readInt("gate recalculation timeout");
+			if (gateTimeoutSeconds < 1) {
+				throw runtime_error("Gate recalculation timeout must be at least 1 second.");
+			}
+
+			cout << "Recalculating gate file..." << endl;
+			GateTable recalculatedGates = TeamComposition::calculateGateTable(
+				recalculateFromScratch,
+				gateTimeoutSeconds,
+				compositionSize,
+				settings[1],
+				settings[2] != 0
+			);
+			writeGateTable(set, recalculatedGates);
+			cout << "Gate recalculation complete." << endl;
+		}
+
 		cout << endl << "Generating team compositions...";
 
 		time_t programStartTime = time(NULL); //record time to measure algorithm runtime
