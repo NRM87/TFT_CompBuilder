@@ -153,28 +153,28 @@
     <ClInclude Include="HelperFunctions.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Set10ChampionInfo.txt" />
-    <Text Include="Set10TraitInfo.txt" />
-    <Text Include="Set11ChampionInfo.txt" />
-    <Text Include="Set11TraitInfo.txt" />
-    <Text Include="Set12ChampionInfo.txt" />
-    <Text Include="Set12TraitInfo.txt" />
-    <Text Include="Set13ChampionInfo.txt" />
-    <Text Include="Set13TraitInfo.txt" />
-    <Text Include="Set16ChampionInfo.txt" />
-    <Text Include="Set16TraitInfo.txt" />
-    <Text Include="Set17ChampionInfo.txt" />
-    <Text Include="Set17TraitInfo.txt" />
-    <Text Include="Set7ChampionInfo.txt" />
-    <Text Include="Set7TraitInfo.txt" />
-    <Text Include="Set8.5ChampionInfo.txt" />
-    <Text Include="Set8.5TraitInfo.txt" />
-    <Text Include="Set8ChampionInfo.txt" />
-    <Text Include="Set8TraitInfo.txt" />
-    <Text Include="LegacySet7ChampionInfo.txt" />
-    <Text Include="LegacySet7TraitInfo.txt" />
-    <Text Include="Set9ChampionInfo.txt" />
-    <Text Include="Set9TraitInfo.txt" />
+    <Text Include="SetInfos\Set10\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set10\TraitInfo.txt" />
+    <Text Include="SetInfos\Set11\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set11\TraitInfo.txt" />
+    <Text Include="SetInfos\Set12\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set12\TraitInfo.txt" />
+    <Text Include="SetInfos\Set13\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set13\TraitInfo.txt" />
+    <Text Include="SetInfos\Set16\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set16\TraitInfo.txt" />
+    <Text Include="SetInfos\Set17\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set17\TraitInfo.txt" />
+    <Text Include="SetInfos\Set7\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set7\TraitInfo.txt" />
+    <Text Include="SetInfos\Set8.5\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set8.5\TraitInfo.txt" />
+    <Text Include="SetInfos\Set8\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set8\TraitInfo.txt" />
+    <Text Include="SetInfos\LegacySet7\ChampionInfo.txt" />
+    <Text Include="SetInfos\LegacySet7\TraitInfo.txt" />
+    <Text Include="SetInfos\Set9\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set9\TraitInfo.txt" />
     <Text Include="SourceInput.txt" />
   </ItemGroup>
   <ItemGroup>

@@ -3,12 +3,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <filesystem>
 #include "json.hpp"
 using namespace std;
 using json = nlohmann::json;
 
-#define CHAMPINFOFILE(set) ("Set" + set + "ChampionInfo.txt")
-#define TRAITINFOFILE(set) ("Set" + set + "TraitInfo.txt")
+#define SETINFODIR(set) ("SetInfos\\Set" + set)
+#define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
+#define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
 
 //TODO: add protection against traits not matching between champion and trait infos
 
@@ -91,6 +93,7 @@ void parseCDragon(string fileName, string setNum) {
 	json data = json::parse(jsonfile);
 	json champArray = data["sets"][setNum]["champions"];
 	json traitArray = data["sets"][setNum]["traits"];
+	std::filesystem::create_directories(SETINFODIR(setNum));
 	ofstream outC(CHAMPINFOFILE(setNum));
 	ofstream outT(TRAITINFOFILE(setNum));
 

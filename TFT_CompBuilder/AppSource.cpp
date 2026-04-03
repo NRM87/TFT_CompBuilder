@@ -16,8 +16,9 @@ using namespace std;
 #define SET "16"
 #define CDRAGONJSON(set) ("TFTSetJSONs\\set" + set + ".json")
 #define LEGACYGUARD (stoi(SET) >= 8 && SET != "8.5")
-#define CHAMPINFOFILE(set) ("Set" + set + "ChampionInfo.txt")
-#define TRAITINFOFILE(set) ("Set" + set + "TraitInfo.txt")
+#define SETINFODIR(set) ("SetInfos\\Set" + set)
+#define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
+#define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
 #define USINGINPUTFILE 1 //1 if using "SourceInput.txt" as input; 0 if using std::cin
 
 int main() {
