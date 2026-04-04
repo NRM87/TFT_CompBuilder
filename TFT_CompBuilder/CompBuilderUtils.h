@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 using std::string;
+using std::vector;
 
 class TeamComposition;
 
@@ -19,8 +20,8 @@ struct GateTable {
 void readChampInfo(string fileName, unordered_map<string, Champion>& champions);
 void readTraitInfo(string fileName, unordered_map<string, vector<int>>& traits);
 void validateSetData(const unordered_map<string, Champion>& champions, const unordered_map<string, vector<int>>& traits);
-GateTable readGateTable(const string& setNum);
-void writeGateTable(const string& setNum, const GateTable& gates);
+GateTable readGateTable(const string& setNum, const vector<string>& emblemTraits = {});
+void writeGateTable(const string& setNum, const GateTable& gates, const vector<string>& emblemTraits = {});
 
 //Function for parsing cdragon patch json into trait and champion text files
 void parseCDragon(string fileName, string setNum);

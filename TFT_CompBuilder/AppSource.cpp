@@ -20,7 +20,7 @@ using namespace std;
 #define SETINFODIR(set) ("SetInfos\\Set" + set)
 #define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
 #define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
-#define USINGINPUTFILE 1 //1 if using "SourceInput.txt" as input; 0 if using std::cin
+#define USINGINPUTFILE 0 //1 if using "SourceInput.txt" as input; 0 if using std::cin
 #define DEFAULT_GATE_TIMEOUT_SECONDS 10
 
 int main() {
@@ -68,7 +68,6 @@ int main() {
 		unordered_map<string, vector<int>> setTraits; //map of trait names and their corresponding milestone values
 		readTraitInfo(TRAITINFOFILE(set), setTraits); //fills setTraits with info from SetTraitInfo text file
 		validateSetData(setChamps, setTraits);
-		TeamComposition::setGateTable(readGateTable(set));
 
 		//Print list of traits and their milestones
 		cout << endl << "Traits:" << endl;
@@ -85,6 +84,8 @@ int main() {
 
 		cout << endl << "Initializing statistics..." << endl;
 		TeamComposition::initializeStatics(setTraits, setChamps); //Uses data from the trait and champ maps to initialize TeamCompositions to be constructed and used
+		TeamComposition seedComp;
+		vector<string> emblemTraits;
 		cout << "Getting champ graph..." << endl;
 		unordered_map<string, vector<string>> championGraph = TeamComposition::getChampGraph(); 
 
@@ -106,6 +107,30 @@ int main() {
 			++count;
 		}
 
+		cout << endl << "Do you have emblems to add? (\"y\"/\"n\")." << endl;
+		ans = readToken("emblem choice");
+		if (ans == "y") {
+			cout << "Enter a space separated list of trait names to add as emblems." << endl;
+			string emblemLine;
+			if (!getline(in >> ws, emblemLine)) {
+				throw runtime_error("Failed reading emblem trait list" + string(USINGINPUTFILE ? " from SourceInput.txt." : " from standard input."));
+			}
+
+			istringstream emblemStream(emblemLine);
+			string emblemTrait;
+			bool foundEmblem = false;
+			while (emblemStream >> emblemTrait) {
+				seedComp.incrementTrait(emblemTrait);
+				emblemTraits.push_back(emblemTrait);
+				foundEmblem = true;
+			}
+
+			if (!foundEmblem) {
+				throw runtime_error("No emblem traits were provided.");
+			}
+		}
+
+		TeamComposition::setGateTable(readGateTable(set, emblemTraits));
 
 		//user input for settings and target comp size to be generated
 		int settings[3] = { 0,0,0 };
@@ -159,7 +184,7 @@ int main() {
 				settings[1],
 				settings[2] != 0
 			);
-			writeGateTable(set, recalculatedGates);
+			writeGateTable(set, recalculatedGates, emblemTraits);
 			double gateRecalculationSeconds = std::chrono::duration<double>(
 				std::chrono::steady_clock::now() - gateRecalculationStart
 			).count();
@@ -169,7 +194,7 @@ int main() {
 		cout << endl << "Generating team compositions...";
 
 		time_t programStartTime = time(NULL); //record time to measure algorithm runtime
-		vector<TeamComposition> compList = TeamComposition::generateComps(compositionSize,settings); //comp generating algorithm
+		vector<TeamComposition> compList = TeamComposition::generateComps(compositionSize, settings, seedComp); //comp generating algorithm
 		
 		
 

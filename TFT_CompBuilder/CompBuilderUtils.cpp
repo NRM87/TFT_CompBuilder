@@ -16,6 +16,37 @@ using json = nlohmann::json;
 #define GATEINFOFILE(set) (SETINFODIR(set) + "\\Gates.json")
 #define TEMPGATEINFOFILE(set) (SETINFODIR(set) + "\\Gates.json.tmp")
 
+namespace {
+	string getEmblemGateKey(const vector<string>& emblemTraits) {
+		if (emblemTraits.empty()) return "";
+
+		vector<string> normalizedTraits = emblemTraits;
+		sort(normalizedTraits.begin(), normalizedTraits.end());
+
+		ostringstream key;
+		for (size_t i = 0; i < normalizedTraits.size(); ++i) {
+			if (i > 0) key << "__";
+			key << normalizedTraits[i];
+		}
+		return key.str();
+	}
+
+	string getGateDirectory(const string& setNum, const vector<string>& emblemTraits) {
+		if (emblemTraits.empty()) return SETINFODIR(setNum);
+		return SETINFODIR(setNum) + "\\EmblemGates";
+	}
+
+	string getGateFilePath(const string& setNum, const vector<string>& emblemTraits) {
+		if (emblemTraits.empty()) return GATEINFOFILE(setNum);
+		return getGateDirectory(setNum, emblemTraits) + "\\" + getEmblemGateKey(emblemTraits) + ".json";
+	}
+
+	string getTempGateFilePath(const string& setNum, const vector<string>& emblemTraits) {
+		if (emblemTraits.empty()) return TEMPGATEINFOFILE(setNum);
+		return getGateDirectory(setNum, emblemTraits) + "\\" + getEmblemGateKey(emblemTraits) + ".json.tmp";
+	}
+}
+
 //Read champion information from text file into a map
 void readChampInfo(string fileName, unordered_map<string, Champion>& champions) {
 	ifstream champInfo;
@@ -143,10 +174,15 @@ void validateSetData(const unordered_map<string, Champion>& champions, const uno
 	}
 }
 
-GateTable readGateTable(const string& setNum) {
-	ifstream gateInfo(GATEINFOFILE(setNum));
+GateTable readGateTable(const string& setNum, const vector<string>& emblemTraits) {
+	string gateFilePath = getGateFilePath(setNum, emblemTraits);
+	if (!emblemTraits.empty() && !std::filesystem::exists(gateFilePath)) {
+		gateFilePath = getGateFilePath(setNum, {});
+	}
+
+	ifstream gateInfo(gateFilePath);
 	if (!gateInfo.is_open()) {
-		throw runtime_error("Could Not Open Gate File: " + GATEINFOFILE(setNum));
+		throw runtime_error("Could Not Open Gate File: " + gateFilePath);
 	}
 
 	json gateJson = json::parse(gateInfo);
@@ -156,10 +192,10 @@ GateTable readGateTable(const string& setNum) {
 	return gates;
 }
 
-void writeGateTable(const string& setNum, const GateTable& gates) {
-	std::filesystem::create_directories(SETINFODIR(setNum));
-	string gateFileName = GATEINFOFILE(setNum);
-	string tempGateFileName = TEMPGATEINFOFILE(setNum);
+void writeGateTable(const string& setNum, const GateTable& gates, const vector<string>& emblemTraits) {
+	std::filesystem::create_directories(getGateDirectory(setNum, emblemTraits));
+	string gateFileName = getGateFilePath(setNum, emblemTraits);
+	string tempGateFileName = getTempGateFilePath(setNum, emblemTraits);
 	ofstream gateInfo(tempGateFileName);
 	if (!gateInfo.is_open()) {
 		throw runtime_error("Could Not Open Gate Temp File For Writing: " + tempGateFileName);

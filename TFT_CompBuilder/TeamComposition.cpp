@@ -104,6 +104,14 @@ bool TeamComposition::addChamp(int champBitPos) {
 	return true;
 }
 
+void TeamComposition::incrementTrait(const string& trait) {
+	auto it = traitStringToArrPosMap.find(trait);
+	if (it == traitStringToArrPosMap.end()) {
+		throw runtime_error("Cannot add emblem for unknown trait \"" + trait + "\".");
+	}
+	++compTraits[it->second];
+}
+
 TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSet, int targetCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds, bool* timedOut) {
 	const int champCount = (int)globalChampInfoMap.size();
 	CompSet nextCompSet;
@@ -161,13 +169,13 @@ TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSe
 //  All possible comps - {1,0,0}
 //  Use tier gates, not trait gates - {0,1,0}
 //  Use dynamic pruning - {0,2,0}
-vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3]) {
+vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3], const TeamComposition& seedComp) {
 	if (compSize > 10 || compSize < 1) throw runtime_error("generateComps must have parameter compSize between 1 and 10 (inclusive).");
 	if (!settings[0] && settings[1] != 2 && !gateTableInitialized) throw runtime_error("Gate table not initialized.");
 
 	int currCompSize = 0;
 	CompSet compSet; //holds the previous while loop iteration's generated comps
-	compSet.emplace(TeamComposition());
+	compSet.emplace(seedComp);
 
 	int prevTraitValMax = 0;
 	int currTraitValMax = 0;
@@ -195,6 +203,11 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 
 	return compList;
 }
+
+vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3]) {
+	return generateComps(compSize, settings, TeamComposition());
+}
+
 //Calls generateComps with default settings
 vector<TeamComposition> TeamComposition::generateComps(int compSize) {
 	int traitSettings[3] = { 0,0,0 };

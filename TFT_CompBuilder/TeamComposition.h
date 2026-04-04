@@ -33,11 +33,13 @@ public:
 
 	//Mutators
 	bool addChamp(const string& champ); //adds a champ to the comp and updates relavant trait and connections fields
-	
+	void incrementTrait(const string& trait); //increments the value of a trait to the comp's trait totals
+
 	//Operators
 	bool operator==(const TeamComposition& left) const { return this->champions == left.champions; };
 
 	//Static accessors
+	static vector<TeamComposition> generateComps(int compSize, int traitSettings[3], const TeamComposition& seedComp); //returns a list of comps based on a target comp size, settings, and seeded trait state
 	static vector<TeamComposition> generateComps(int compSize, int traitSettings[3]); //returns a list of comps based on a target comp size and settings
 	static vector<TeamComposition> generateComps(int compSize); //calls default settings of generateComps
 	static unordered_map<string, vector<string>> getChampGraph() { return championGraph; }; 
@@ -61,6 +63,7 @@ private:
 			return hash<ChampSet>()(champs);
 		}
 	};
+
 	using CompSet = unordered_set<TeamComposition, teamCompHash>;
 
 	//Object fields
