@@ -231,21 +231,28 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 		CompSet compSet;
 		compSet.emplace(TeamComposition());
 		int prevTraitValMax = 0;
-		int scratchStartGate = 0;
-		if (recalculateFromScratch && targetCompSize > 1) {
-			scratchStartGate = (pruningMode == 1)
-				? calculatedGates.activeTierGates[targetCompSize - 2][targetCompSize - 2]
-				: calculatedGates.activeTraitGates[targetCompSize - 2][targetCompSize - 2];
-		}
-		int previousAcceptedGate = scratchStartGate;
+		int previousAcceptedGate = 0;
 
 		for (int iterationCompSize = 1; iterationCompSize <= targetCompSize; ++iterationCompSize) {
 			int settings[3] = { 0, pruningMode, connectedChampsOnly ? 1 : 0 };
-			int gateBound = recalculateFromScratch
-				? previousAcceptedGate
-				: max(0, pruningMode == 1
+			int minimumGateBound = (iterationCompSize > 1) ? previousAcceptedGate : 0;
+			int gateBound = 0;
+			if (recalculateFromScratch) {
+				if (targetCompSize > 1 && iterationCompSize < targetCompSize) {
+					gateBound = (pruningMode == 1)
+						? calculatedGates.activeTierGates[targetCompSize - 2][iterationCompSize - 1]
+						: calculatedGates.activeTraitGates[targetCompSize - 2][iterationCompSize - 1];
+				}
+				else if (iterationCompSize > 1) {
+					gateBound = previousAcceptedGate;
+				}
+			}
+			else {
+				gateBound = max(0, pruningMode == 1
 					? currentGateTable.activeTierGates[targetCompSize - 1][iterationCompSize - 1]
 					: currentGateTable.activeTraitGates[targetCompSize - 1][iterationCompSize - 1]);
+			}
+			gateBound = max(gateBound, minimumGateBound);
 			int highestSlowBound = -1;
 			int lowestEmptyBound = std::numeric_limits<int>::max();
 			int weakestSuccessGate = -1;
@@ -285,18 +292,19 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 							previousAcceptedGate = weakestSuccessGate;
 							break;
 						}
-						gateBound = highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2);
+						int lowerSearchBound = max(highestSlowBound, minimumGateBound - 1);
+						gateBound = lowerSearchBound + max(1, (weakestSuccessGate - lowerSearchBound) / 2);
 						continue;
 					}
 
-					if (gateBound == 0) {
+					if (gateBound == minimumGateBound) {
 						throw runtime_error(
 							"Unable to find a non-empty gate for pruning mode " + to_string(pruningMode) +
 							", target size " + to_string(targetCompSize) +
 							", iteration size " + to_string(iterationCompSize) + "."
 						);
 					}
-					gateBound = max(0, gateBound - 1);
+					gateBound = max(minimumGateBound, gateBound - 1);
 					continue;
 				}
 
@@ -321,7 +329,8 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 								previousAcceptedGate = weakestSuccessGate;
 								break;
 							}
-							gateBound = highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2);
+							int lowerSearchBound = max(highestSlowBound, minimumGateBound - 1);
+							gateBound = lowerSearchBound + max(1, (weakestSuccessGate - lowerSearchBound) / 2);
 							continue;
 						}
 						if (lowestEmptyBound != std::numeric_limits<int>::max() && highestSlowBound + 1 >= lowestEmptyBound) {
@@ -334,6 +343,7 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 						gateBound = (lowestEmptyBound == std::numeric_limits<int>::max())
 							? gateBound + 1
 							: highestSlowBound + max(1, (lowestEmptyBound - highestSlowBound) / 2);
+						gateBound = max(gateBound, minimumGateBound);
 						continue;
 					}
 
@@ -359,18 +369,19 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 								previousAcceptedGate = weakestSuccessGate;
 								break;
 							}
-							gateBound = highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2);
+							int lowerSearchBound = max(highestSlowBound, minimumGateBound - 1);
+							gateBound = lowerSearchBound + max(1, (weakestSuccessGate - lowerSearchBound) / 2);
 							continue;
 						}
 
-						if (gateBound == 0) {
+						if (gateBound == minimumGateBound) {
 							throw runtime_error(
 								"Unable to find a gate that preserves a non-empty next iteration for pruning mode " + to_string(pruningMode) +
 								", target size " + to_string(targetCompSize) +
 								", iteration size " + to_string(iterationCompSize) + "."
 							);
 						}
-						gateBound = max(0, gateBound - 1);
+						gateBound = max(minimumGateBound, gateBound - 1);
 						continue;
 					}
 
@@ -386,7 +397,7 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 					weakestSuccessCompSet.swap(nextCompSet);
 				}
 
-				if (weakestSuccessGate == 0 || highestSlowBound + 1 >= weakestSuccessGate) {
+				if (weakestSuccessGate == minimumGateBound || highestSlowBound + 1 >= weakestSuccessGate) {
 					int acceptedGate = (iterationCompSize == targetCompSize) ? weakestSuccessTraitValue : weakestSuccessGate;
 					if (pruningMode == 1) calculatedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
 					else calculatedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1] = acceptedGate;
@@ -396,9 +407,8 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 					break;
 				}
 
-				gateBound = (highestSlowBound >= 0)
-					? highestSlowBound + max(1, (weakestSuccessGate - highestSlowBound) / 2)
-					: weakestSuccessGate - 1;
+				int lowerSearchBound = max(highestSlowBound, minimumGateBound - 1);
+				gateBound = lowerSearchBound + max(1, (weakestSuccessGate - lowerSearchBound) / 2);
 			}
 		}
 	}

@@ -20,7 +20,7 @@ using namespace std;
 #define SETINFODIR(set) ("SetInfos\\Set" + set)
 #define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
 #define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
-#define USINGINPUTFILE 0 //1 if using "SourceInput.txt" as input; 0 if using std::cin
+#define USINGINPUTFILE 1 //1 if using "SourceInput.txt" as input; 0 if using std::cin
 #define DEFAULT_GATE_TIMEOUT_SECONDS 10
 
 int main() {
