@@ -45,6 +45,7 @@ public:
 	static unordered_map<string, vector<string>> getChampGraph() { return championGraph; }; 
 	static void setGateTable(const GateTable& gateTable);
 	static GateTable getGateTable() { return currentGateTable; }
+	static GateTable calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, const TeamComposition& seedComp, bool connectedChampsOnly = false);
 	static GateTable calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, bool connectedChampsOnly = false);
 
 	//Static mutators

@@ -182,6 +182,7 @@ int main() {
 				gateTimeoutSeconds,
 				compositionSize,
 				settings[1],
+				seedComp,
 				settings[2] != 0
 			);
 			writeGateTable(set, recalculatedGates, emblemTraits);

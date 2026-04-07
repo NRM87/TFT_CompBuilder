@@ -214,7 +214,7 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize) {
 	return generateComps(compSize, traitSettings);
 }
 
-GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, bool connectedChampsOnly) {
+GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, const TeamComposition& seedComp, bool connectedChampsOnly) {
 	if (!initialized) throw runtime_error("TeamComposition statics not initialized.");
 	if (timeoutSeconds < 1) throw runtime_error("Gate calculation timeout must be at least 1 second.");
 	if (!recalculateFromScratch && !gateTableInitialized) throw runtime_error("Gate table not initialized.");
@@ -229,7 +229,7 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 
 	for (int targetCompSize = 1; targetCompSize <= maxTargetCompSize; ++targetCompSize) {
 		CompSet compSet;
-		compSet.emplace(TeamComposition());
+		compSet.emplace(seedComp);
 		int prevTraitValMax = 0;
 		int previousAcceptedGate = 0;
 
@@ -415,6 +415,10 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 
 	setGateTable(calculatedGates);
 	return calculatedGates;
+}
+
+GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, bool connectedChampsOnly) {
+	return calculateGateTable(recalculateFromScratch, timeoutSeconds, maxTargetCompSize, pruningMode, TeamComposition(), connectedChampsOnly);
 }
 
 //Properly initializes static fields. Specifically:
