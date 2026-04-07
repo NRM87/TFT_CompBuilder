@@ -157,7 +157,7 @@ int main() {
 			throw runtime_error("Composition size must be between 1 and 10.");
 		}
 
-		cout << endl << "Do you want to recalculate this set's gate file up to the selected comp size and pruning mode? (\"y\"/\"n\")." << endl;
+		cout << endl << "Do you want to recalculate this set's gate file for the selected comp size and pruning mode? (\"y\"/\"n\")." << endl;
 		ans = readToken("gate recalculation choice");
 		if (ans == "y") {
 			if (settings[1] != 0 && settings[1] != 1) {

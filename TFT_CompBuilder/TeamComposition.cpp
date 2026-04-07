@@ -227,7 +227,8 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 
 	GateTable calculatedGates = gateTableInitialized ? currentGateTable : GateTable{};
 
-	for (int targetCompSize = 1; targetCompSize <= maxTargetCompSize; ++targetCompSize) {
+	int targetCompSize = maxTargetCompSize;
+	{
 		CompSet compSet;
 		compSet.emplace(seedComp);
 		int prevTraitValMax = 0;
