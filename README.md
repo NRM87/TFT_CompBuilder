@@ -1,21 +1,171 @@
-TFT_CompBuilder
-# Teamfight Tactics Team Composition Generator
-## Game Background
-  Teamfight Tactics is a game made by Riot Games. This game is an 'auto-battler' where you build teams of characters and battle other players' teams over several rounds. Characters are called "champions" and each champion has a few attributes called traits. Many champions share traits, so when you build a team, the game keeps track of each trait's total across all champions in the team. Each trait also has milestones which give teams a bonus when reached. The milestones are reached by having enough of the trait in your team. For example, the "Guardian" trait has milestones for when 2, 4, or 6 champions have the trait, and provides an increasingly powerful defensive bonus to your team the higher the milestone your team has reached. These differing levels of each trait milestone are called trait tiers. When just the first milestone of a trait is reached, the trait is considered active. One of the main points of engagement for Teamfight Tactics is the strategy and planning that goes into making a team with many active and useful traits, and the former of the two is the basis of this program.
-  
-## Purpose
-  In the game there is a rare bonus called Stand United (recieved through a different system unrelated to traits and champions) that gives more power based on the number of active traits in your team. Every time Teamfight Tactics releases a new Set, rotating in a different pool of champions and traits in the game, I like trying to find the compositions with the most active traits possible in the case that I do recieve this bonus, apart from the fact that it is just cool to see a large amount of active traits for my team in a game. Until now, I have been manually building team compositions through trial and error to find the teams with the most active traits using tools such as https://app.mobalytics.gg/tft/comp-builder and https://tftactics.gg/team-builder. Eventually I had the idea that I could automate this process and practice my programming skills at the same time, and thus this program was born.
-  
- ## Explanation
-  Right now this program displays input and output in the IDE terminal. This program is currently meant to find the possible team compositions in Teamfight Tactics that have the most active traits, given a target composition size, list of champions and their traits, and a list of traits and their milestones. There are two main ways to measure traits: by counting the traits that are simply active, or by counting the tiers of each active trait--the total number of trait milestones reached. This program can be configured to find comps using either method. For the current Set 7 of Teamfight Tactics, the number of all the possible combinations of champions for a team composition of size n is given by the equation $\frac{7\cdot47!}{\left(49-n\right)!\left(n-2\right)!}+\frac{51!}{\left(51-n\right)!n!}$ (This equation does not count team compositions that have traits that cancel each other out, such as a composition having both "Dragon" and "Scalescorn"). If the program were to analyze all the team compositions of a standard maximum size of 9, it would have to build and check over 3.48 BILLION compositions! Clearly this is way too much so I devised an algorithm to prune many of the unneeded compositions, which is in the file TeamComposition.cpp in the function generateComps(). Currently my algorithm can find the team compositions of size 9 with their highest active trait count of 11 in just under 2 minutes on my machine.
+# TFT Comp Builder
 
-## Future
-  Right now this program accomplishes all that I wanted it to, but in the future I could add more settings to exclude certain champions from the compositions generated, or force generated compositions to have a certain trait. The algorithm's "gates" were are determined experimentally through trial and error, so I could make another algorithm to determine the correct gates for the comp generating algorithm, to prevent manually having to set it every time a new Set is released. I would also like to make a GUI window for the program's input and output, and fetch game data directly from Riot Games's API (see https://developer.riotgames.com/).
+TFT Comp Builder finds Teamfight Tactics compositions with strong trait coverage. It incrementally builds compositions, uses calculated gates to prune unpromising candidates, and caches both gate rows and completed composition lists on disk.
 
-## Terminology
- - Teamfight Tactics (TFT) - The name of the game where you build team compositions with champions and their traits.
- - Set - The current rotation of champions and traits available in Teamfight Tactics. This comp-builder program is currently configured to TFT's 7th Set. To not be confused with the data structure, this Set is referred to with capital S in code comments.
- - Team Composition (comp) - A set of champions. Typically a comp will not have more than 9 slots for champions, and this program is based around that. 
- - Champion (champ) - A character in the game that has traits and takes up space in a comp, typically only 1 slot but sometimes 2.
- - Trait - A characteristic of a champion. Team compositions have amounts of traits equal to the traits' totals across the champions in the team composition. A team composition passes a trait milestone once it has enough of the trait to reach the number indicated on the milestone.
- - Trait Tiers (tiers) - The amount of trait milestones that a team composition has reached or passed.
+## Requirements
+
+- Windows 10 or 11
+- Visual Studio 2022 with the **Desktop development with C++** workload
+- MSVC v143 and a Windows 10 or 11 SDK
+
+The project uses C++20. No external packages need to be downloaded; the JSON library is included in the repository.
+
+## Build with Visual Studio
+
+1. Open `TFT_CompBuilder.sln` in Visual Studio 2022.
+2. Select **Release** and **x64** from the solution configuration controls.
+3. Choose **Build > Build Solution**, or press `Ctrl+Shift+B`.
+
+The executable will be created at:
+
+```text
+x64\Release\TFT_CompBuilder.exe
+```
+
+Release builds are strongly recommended. Gate calculation uses elapsed time to tune pruning, so a Debug build will calculate different, usually more aggressive gates and run considerably slower. Debug and Release caches are kept logically separate.
+
+## Build from the command line
+
+Open **Developer PowerShell for VS 2022**, change to the repository root, and run:
+
+```powershell
+msbuild .\TFT_CompBuilder.sln /m /p:Configuration=Release /p:Platform=x64
+```
+
+If `msbuild` is not recognized, use the Developer PowerShell shortcut installed with Visual Studio rather than a regular PowerShell window.
+
+## Run
+
+The program reads `SetInfos` and writes `Cache` relative to its working directory. Run it from the inner `TFT_CompBuilder` project directory:
+
+```powershell
+cd .\TFT_CompBuilder
+..\x64\Release\TFT_CompBuilder.exe
+```
+
+With no options, the program:
+
+- Finds the latest numeric `SetInfos\Set<number>` directory, currently Set 18.
+- Builds size-9 compositions.
+- Uses active-trait gates rather than total trait-tier gates.
+- Uses no emblems and considers all champions.
+- Gives each gate probe a 10-second timeout.
+- Reads and writes the disk cache.
+
+The first request for a configuration can take a while because its gates and compositions must be calculated. Later identical requests load the cached composition list. When only the requested composition size is new, the program reuses compatible cached gates and calculates the missing size row.
+
+## Command-line options
+
+```text
+Usage: TFT_CompBuilder.exe [options]
+
+  -s, --set <number>       TFT set to load (default: latest available set)
+      --size <1-10>        Team composition size (default: 9)
+      --gate-type <type>   traits (default) or tiers
+      --emblem <trait>     Add an emblem; repeat for multiple or duplicate emblems
+      --connected-only     Only extend comps with connected champions
+      --gate-timeout <s>   Gate probe timeout in seconds (default: 10)
+      --refresh            Ignore matching caches and recalculate gates
+      --no-cache           Do not read or write the disk cache
+      --interactive        Use the prompt-driven setup flow
+  -i, --input <path>       Read interactive answers from a file; implies --interactive
+  -h, --help               Show command help
+```
+
+Trait arguments must match the names in the set's `TraitInfo.txt`. Names containing spaces are normally represented with underscores, such as `Space_Groove`.
+
+## Examples
+
+Run the default latest-set, size-9 active-trait search:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe
+```
+
+Find size-8 compositions for Set 18:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --set 18 --size 8
+```
+
+Optimize for total active trait tiers instead of unique active traits:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --gate-type tiers
+```
+
+Add several emblems:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --emblem Fae --emblem Primal
+```
+
+Duplicate emblems are supported and remain distinct in the cache identity:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --emblem Fae --emblem Fae
+```
+
+Force fresh gate and composition calculation:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --refresh
+```
+
+Use the original prompt-driven workflow:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --interactive
+```
+
+Read prompt answers from a file:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --input SourceInput.txt
+```
+
+## Cache behavior
+
+Generated files are stored beneath:
+
+```text
+TFT_CompBuilder\Cache\
+  gates\
+  compositions\
+```
+
+`Cache` is ignored by Git. Cache identities account for the set, champion and trait file contents, gate type, emblem multiset, connected-only mode, gate timeout, build profile, algorithm version, team size, and exact gate row. Editing `ChampionInfo.txt` or `TraitInfo.txt` therefore invalidates affected entries automatically.
+
+Use `--refresh` to replace the matching cached calculation, or `--no-cache` for a run that neither reads nor writes cached data.
+
+## Set data
+
+Each supported set has a directory such as:
+
+```text
+TFT_CompBuilder\SetInfos\Set18\
+  ChampionInfo.txt
+  TraitInfo.txt
+```
+
+The default set is the highest numeric directory containing both files. Adding a later `Set<number>` directory therefore updates the default without recompiling the program.
+
+Champion entries support weighted traits, wide champions, and interchangeable trait choices. See existing set files and the parser comments in `CompBuilderUtils.h` for the exact syntax.
+
+## Troubleshooting
+
+### Could not open a champion, trait, or set-data file
+
+The executable is probably running with the wrong working directory. Change to the inner `TFT_CompBuilder` directory before launching it.
+
+### The first run is slow
+
+This is expected for an uncached size-9 request. Use a Release x64 build and allow the first run to populate `Cache`. Use a smaller `--size` while checking configuration or set data.
+
+### Visual Studio starts the program in the wrong directory
+
+Open the project properties and set **Debugging > Working Directory** to `$(ProjectDir)`, or run the executable from PowerShell as shown above.
+
+### Cache results should be recalculated
+
+Run with `--refresh`. Changes to champion or trait files are detected automatically, but `--refresh` is useful when deliberately retuning gates with the same inputs or timeout.
