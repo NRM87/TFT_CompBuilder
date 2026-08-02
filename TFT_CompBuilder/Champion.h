@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <utility>
 using namespace std;
 
 //Champions are objects in the game Teamfight Tactics that have traits and take up space with their "width".
@@ -21,10 +22,12 @@ public:
 	int getWidth() const { return width; };
 	string getName() const { return name; };
 	const map<string, int>& getTraitMap() const { return traits; };
+	const vector<pair<string, int>>& getInterchangeableTraits() const { return interchangeableTraits; };
 	string toString() const;
 
 	//Mutators
 	void addTrait(string trait, int traitValue = 1); 
+	void addInterchangeableTrait(string trait, int traitValue = 1);
 	void setName(string name) { this->name = name; };
 	void setWidth(int width) { this->width = width; };
 private:
@@ -33,4 +36,5 @@ private:
 	int width; //amount of "space" the champion takes up, usually just 1
 	string name;
 	map<string, int> traits;
+	vector<pair<string, int>> interchangeableTraits; //exactly one of these trait contributions is active per variant
 };

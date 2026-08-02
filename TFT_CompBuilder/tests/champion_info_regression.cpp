@@ -26,6 +26,21 @@ namespace {
 		}
 		return false;
 	}
+
+	int countGeneratedChampion(const vector<TeamComposition>& compositions, const string& champion) {
+		int count = 0;
+		for (const TeamComposition& composition : compositions) {
+			if (composition.containsChamp(champion)) ++count;
+		}
+		return count;
+	}
+
+	const TeamComposition* findComposition(const vector<TeamComposition>& compositions, const string& text) {
+		for (const TeamComposition& composition : compositions) {
+			if (composition.toString().find(text) != string::npos) return &composition;
+		}
+		return nullptr;
+	}
 }
 
 int main() {
@@ -66,6 +81,49 @@ int main() {
 			passed &= expectEqual("width-two unit bypasses earlier-width gate", gatedSizeTwoComps.front().containsChamp("Test_Unit"), 1);
 		}
 
+		unordered_map<string, Champion> variantChampions;
+		readChampInfo("tests\\fixtures\\champion_info_variants.txt", variantChampions);
+		passed &= expectEqual("canonical interchangeable-trait champion count", (int)variantChampions.size(), 3);
+		unordered_map<string, vector<int>> variantTraits = {
+			{ "Base", { 1 } },
+			{ "Alpha", { 1 } },
+			{ "Gamma", { 2 } }
+		};
+		validateSetData(variantChampions, variantTraits);
+		TeamComposition::initializeStatics(variantTraits, variantChampions);
+		TeamComposition explicitVariantComp;
+		passed &= expectEqual("first explicit interchangeable-trait variant can be added", explicitVariantComp.addChamp("Adaptive_Unit[Alpha]"), 1);
+		passed &= expectEqual("second variant of the same champion is rejected", explicitVariantComp.addChamp("Adaptive_Unit[Gamma:2]"), 0);
+		passed &= expectEqual("rejected sibling variant does not consume a slot", explicitVariantComp.size(), 1);
+		vector<TeamComposition> variantSizeOneComps = TeamComposition::generateComps(1, allCompsSettings);
+		passed &= expectEqual("expanded interchangeable-trait composition count", (int)variantSizeOneComps.size(), 4);
+		passed &= expectEqual("canonical champion matches every internal variant", countGeneratedChampion(variantSizeOneComps, "Adaptive_Unit"), 2);
+		const TeamComposition* alphaVariant = findComposition(variantSizeOneComps, "Adaptive_Unit[Alpha]");
+		const TeamComposition* gammaVariant = findComposition(variantSizeOneComps, "Adaptive_Unit[Gamma:2]");
+		passed &= expectEqual("Alpha variant is labeled", alphaVariant != nullptr, 1);
+		passed &= expectEqual("weighted Gamma variant is labeled", gammaVariant != nullptr, 1);
+		if (alphaVariant != nullptr) passed &= expectEqual("Alpha variant active traits", alphaVariant->getActiveTraitsTotal(), 2);
+		if (gammaVariant != nullptr) passed &= expectEqual("weighted Gamma variant active traits", gammaVariant->getActiveTraitsTotal(), 2);
+
+		vector<TeamComposition> variantSizeTwoComps = TeamComposition::generateComps(2, allCompsSettings);
+		passed &= expectEqual("mutually exclusive interchangeable-trait combinations", (int)variantSizeTwoComps.size(), 5);
+		for (const TeamComposition& composition : variantSizeTwoComps) {
+			size_t firstAdaptive = composition.toString().find("Adaptive_Unit[");
+			if (firstAdaptive != string::npos) {
+				passed &= expectEqual(
+					"composition contains only one interchangeable-trait variant",
+					composition.toString().find("Adaptive_Unit[", firstAdaptive + 1) == string::npos,
+					1
+				);
+			}
+		}
+
+		int connectedSettings[3] = { 1, 0, 1 };
+		vector<TeamComposition> connectedVariantComps = TeamComposition::generateComps(2, connectedSettings);
+		passed &= expectEqual("variant-specific connected composition count", (int)connectedVariantComps.size(), 2);
+		passed &= expectEqual("Alpha variant connects to Alpha ally", findComposition(connectedVariantComps, "Adaptive_Unit[Alpha]") != nullptr, 1);
+		passed &= expectEqual("Gamma variant connects to Gamma ally", findComposition(connectedVariantComps, "Adaptive_Unit[Gamma:2]") != nullptr, 1);
+
 		unordered_map<string, Champion> set7Champions;
 		readChampInfo("SetInfos\\Set7\\ChampionInfo.txt", set7Champions);
 		unordered_map<string, vector<int>> set7Traits;
@@ -96,10 +154,15 @@ int main() {
 			cerr << "Set 18 validation failed: " << ex.what() << endl;
 			passed = false;
 		}
+		passed &= expectEqual("Set 18 canonical champion count", (int)set18Champions.size(), 65);
 		const Champion& elderDragon = set18Champions.at("Elder_Dragon");
 		passed &= expectEqual("Set 18 Elder Dragon width", elderDragon.getWidth(), 2);
 		passed &= expectEqual("Set 18 Riftbeast contribution", traitValue(elderDragon, "Riftbeast"), 2);
+		passed &= expectEqual("Set 18 Lux interchangeable origin count", (int)set18Champions.at("Lux").getInterchangeableTraits().size(), 9);
 		TeamComposition::initializeStatics(set18Traits, set18Champions);
+		vector<TeamComposition> set18SizeOneComps = TeamComposition::generateComps(1, allCompsSettings);
+		passed &= expectEqual("Set 18 one-slot internal composition count", (int)set18SizeOneComps.size(), 72);
+		passed &= expectEqual("Set 18 Lux internal variant count", countGeneratedChampion(set18SizeOneComps, "Lux"), 9);
 		vector<TeamComposition> set18SizeTwoComps = TeamComposition::generateComps(2, allCompsSettings);
 		passed &= expectEqual("Set 18 Elder Dragon survives width-based generation", containsGeneratedChampion(set18SizeTwoComps, "Elder_Dragon"), 1);
 

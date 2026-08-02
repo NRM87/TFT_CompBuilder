@@ -52,6 +52,7 @@ Cinderling Riftbeast Hunter
 Karma Blossom Spellweaver
 Kobuko Sprykin Brawler
 Leona Solar Defender
+Lux [Blossom:2|Blackthorn:2|Coven:2|Elderwood:2|Fae:2|Inferno:2|Lunar:2|Primal:2|Solar:2]
 Ornn Elderwood Defender
 Pebbles Riftbeast Invoker
 Rakan Fae Juggernaut Vanguard

@@ -4,22 +4,48 @@
 #include <algorithm>
 #include <chrono>
 #include <limits>
+#include <utility>
 using namespace std;
+
+namespace {
+	struct ChampionVariantData {
+		string canonicalName;
+		string label;
+		int width;
+		map<string, int> traits;
+	};
+
+	string getVariantLabel(const string& championName, const pair<string, int>& choice) {
+		string label = championName + "[" + choice.first;
+		if (choice.second != 1) label += ":" + to_string(choice.second);
+		return label + "]";
+	}
+
+	bool sharesConnectingTrait(const map<string, int>& left, const map<string, int>& right) {
+		for (const auto& trait : left) {
+			if (trait.first != "Threat" && right.contains(trait.first)) return true;
+		}
+		return false;
+	}
+}
 
 bool TeamComposition::initialized = false;
 bool TeamComposition::gateTableInitialized = false;
 ChampSet TeamComposition::dragons = 0;
 ChampSet TeamComposition::scalescorns = 0;
 unordered_map<string, Champion> TeamComposition::globalChampInfoMap;
+int TeamComposition::championVariantCount = 0;
 unordered_map<string, vector<int>> TeamComposition::currentSetTraits;
 unordered_map<string, vector<string>> TeamComposition::championGraph;
 unordered_map<string, ChampSet> TeamComposition::championBitsetGraph;
 unordered_map<string, int> TeamComposition::champStringToBitPosMap;
+unordered_map<string, ChampSet> TeamComposition::champStringToBitsetMap;
 string TeamComposition::champBitPosToStringMap[128];
 string TeamComposition::traitArrPosToStringMap[64];
 unordered_map<string, short> TeamComposition::traitStringToArrPosMap;
 short TeamComposition::champWidthByBitPos[128];
 ChampSet TeamComposition::championConnectionsByBitPos[128];
+ChampSet TeamComposition::championIdentityByBitPos[128];
 vector<TeamComposition::TraitDelta> TeamComposition::champTraitDeltasByBitPos[128];
 GateTable TeamComposition::currentGateTable;
 
@@ -65,16 +91,16 @@ int TeamComposition::getActiveTraitsTotal() const {
 }
 
 bool TeamComposition::containsChamp(const string& champion) const {
-	auto it = champStringToBitPosMap.find(champion);
-	if (it == champStringToBitPosMap.end()) return false;
-	return champions.test(it->second);
+	auto it = champStringToBitsetMap.find(champion);
+	if (it == champStringToBitsetMap.end()) return false;
+	return (champions & it->second).any();
 }
 
 //Returns a string representation of the comp
 string TeamComposition::toString() const {
 	string s = "";
 	int champCount = 0;
-	for (int i = 0; i < globalChampInfoMap.size(); ++i) {
+	for (int i = 0; i < championVariantCount; ++i) {
 		if (champions.test(i)) {
 			s += " " + champBitPosToStringMap[i];
 			++champCount;
@@ -86,19 +112,29 @@ string TeamComposition::toString() const {
 
 //Adds a champ to the comp and updates compTraits and connectedChamps accordingly. Returns true if champ was added.
 bool TeamComposition::addChamp(const string& champ) {
-	return addChamp(champStringToBitPosMap.at(champ));
+	auto exactVariant = champStringToBitPosMap.find(champ);
+	if (exactVariant != champStringToBitPosMap.end()) return addChamp(exactVariant->second);
+
+	auto canonicalChampion = champStringToBitsetMap.find(champ);
+	if (canonicalChampion == champStringToBitsetMap.end()) {
+		throw runtime_error("Unknown champion or champion variant \"" + champ + "\".");
+	}
+	throw runtime_error(
+		"Champion \"" + champ + "\" has interchangeable traits. Add an explicit variant such as " + champ + "[Trait]."
+	);
 }
 
 bool TeamComposition::addChamp(int champBitPos) {
-	if (champions.test(champBitPos)) return false;
+	if (blockedChampionVariants.test(champBitPos)) return false;
 	champions.set(champBitPos); //Add the champ to the comp, duplicates are not added
+	blockedChampionVariants |= championIdentityByBitPos[champBitPos];
 
 	for (const TraitDelta& trait : champTraitDeltasByBitPos[champBitPos]) {
 		compTraits[trait.traitPos] += trait.traitValue;
 	}
 
 	connectedChamps |= championConnectionsByBitPos[champBitPos]; //adds champ's connected champs to the comp's connected champs
-	connectedChamps &= (~champions); //removes champs from connectedChamps that are already in the comp
+	connectedChamps &= (~blockedChampionVariants); //removes the selected champion and all mutually exclusive variants
 
 	compSize += champWidthByBitPos[champBitPos]; //increases the comp's size by the champ's width
 	return true;
@@ -113,7 +149,7 @@ void TeamComposition::incrementTrait(const string& trait) {
 }
 
 TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSet, int targetCompSize, int iterationCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds, bool* timedOut) {
-	const int champCount = (int)globalChampInfoMap.size();
+	const int champCount = championVariantCount;
 	CompSet nextCompSet;
 	currTraitValMax = 0;
 	auto iterationStart = std::chrono::steady_clock::now();
@@ -149,7 +185,8 @@ TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSe
 
 		ChampSet connections;
 		if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
-		else connections = ~currComp.champions; //consider every champ not in the current comp already
+		else connections = ~currComp.blockedChampionVariants; //consider every champion whose canonical identity is not already in the comp
+		connections &= ~currComp.blockedChampionVariants;
 
 		for (int i = 0; i < champCount; ++i) {
 			if (timeoutSeconds >= 0.0) {
@@ -442,11 +479,44 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 //Copies traitData into currentSetTraits and copies champInfo into globalChampInfoMap
 //Initializes champStringTo64BitMap, champ64BitToStringMap, traitStringToShortMap, and traitShortToStringMap with correct string-position pairs
 void TeamComposition::initializeStatics(unordered_map<string, vector<int>> traitData, unordered_map<string, Champion> champInfo) {
+	initialized = false;
 	currentSetTraits = traitData;
 	globalChampInfoMap = champInfo;
+
+	vector<ChampionVariantData> variants;
+	for (const auto& [championName, champion] : champInfo) {
+		const auto& choices = champion.getInterchangeableTraits();
+		if (choices.empty()) {
+			variants.push_back({ championName, championName, champion.getWidth(), champion.getTraitMap() });
+			continue;
+		}
+
+		for (const auto& choice : choices) {
+			map<string, int> variantTraits = champion.getTraitMap();
+			variantTraits[choice.first] += choice.second;
+			variants.push_back({
+				championName,
+				getVariantLabel(championName, choice),
+				champion.getWidth(),
+				move(variantTraits)
+			});
+		}
+	}
+	if (variants.size() > 128) {
+		throw runtime_error(
+			"Champion choices expand to " + to_string(variants.size()) +
+			" internal variants, but TeamComposition only supports up to 128."
+		);
+	}
+	if (traitData.size() > 32) {
+		throw runtime_error("TeamComposition only supports up to 32 traits.");
+	}
+	championVariantCount = (int)variants.size();
+
 	championGraph.clear();
 	championBitsetGraph.clear();
 	champStringToBitPosMap.clear();
+	champStringToBitsetMap.clear();
 	traitStringToArrPosMap.clear();
 	dragons.reset();
 	scalescorns.reset();
@@ -454,32 +524,15 @@ void TeamComposition::initializeStatics(unordered_map<string, vector<int>> trait
 		champBitPosToStringMap[i].clear();
 		champWidthByBitPos[i] = 0;
 		championConnectionsByBitPos[i].reset();
+		championIdentityByBitPos[i].reset();
 		champTraitDeltasByBitPos[i].clear();
 	}
 	for (int i = 0; i < 64; ++i) {
 		traitArrPosToStringMap[i].clear();
 	}
 
-	//64bit long-longs represent comps; each bit corresponds to a different champion, 1 if it is in the comp and 0 if not
-	//Set champStringToBitPosMap, along with dragons and scalescorns lists (which are long-longs)
+	// Give each trait a corresponding position in compTraits.
 	int count = 0;
-	for (const pair<string, Champion>& champ : champInfo) {
-		//Maps a champion's name as a string to a number. The number is the bit position in a long-long that the champ will now correspond with
-		champStringToBitPosMap.emplace(champ.first, count); 
-
-		//Adds champions with certain traits to respective bitsets that keep track of which champions hold these traits 
-		if (champ.second.getTraitMap().count("Dragon")) dragons.set(count); 
-		if (champ.second.getTraitMap().count("Scalescorn")) scalescorns.set(count);
-
-		++count; //increment so that next champion will have a different corresponding number for mapping
-	}
-	//Set corresponding champBitPosToStringMap which just maps the champion's name as a string to the number determined in the previous loop above.
-	for (const pair<string, int>& champ : champStringToBitPosMap) {
-		champBitPosToStringMap[champ.second] = champ.first;
-	}
-
-	//Give each trait a corresponding number (which is an array position/index) and then initialize the subsequent trait string-to-arrayposition and arrayposition-to-string maps
-	count = 0;
 	for (const pair<string, vector<int>>& trait : traitData) {
 		traitStringToArrPosMap.emplace(trait.first, count);
 		++count;
@@ -488,46 +541,69 @@ void TeamComposition::initializeStatics(unordered_map<string, vector<int>> trait
 		traitArrPosToStringMap[(int)trait.second] = trait.first;
 	}
 
-	for (const pair<string, Champion>& champ : champInfo) {
-		int champBitPos = champStringToBitPosMap.at(champ.first);
-		champWidthByBitPos[champBitPos] = (short)champ.second.getWidth();
-		for (const pair<string, int>& trait : champ.second.getTraitMap()) {
-			champTraitDeltasByBitPos[champBitPos].push_back(
-				{ traitStringToArrPosMap.at(trait.first), (short)trait.second }
-			);
+	// Assign every internal variant a bit and build one identity mask per canonical champion.
+	unordered_map<string, ChampSet> canonicalChampionMasks;
+	for (int i = 0; i < championVariantCount; ++i) {
+		const ChampionVariantData& variant = variants[i];
+		if (!champStringToBitPosMap.emplace(variant.label, i).second) {
+			throw runtime_error("Duplicate internal champion variant label: " + variant.label);
 		}
-	}
+		champBitPosToStringMap[i] = variant.label;
+		champWidthByBitPos[i] = (short)variant.width;
+		canonicalChampionMasks[variant.canonicalName].set(i);
 
-	//Initializes the champion adjacency list map
-	//First two nested loops go through each permutation of two champions with the first champion being keyChamp and the second being otherChamp
-	for (const pair<string, Champion>& keyChamp : champInfo) {
-		vector<string> connectedChamps; //records list of champions sharing a trait with keyChamp
-		for (const pair<string, Champion>& otherChamp : champInfo) {
-			if (otherChamp.first != keyChamp.first) {
-				//Last two nested loops compare each trait between keyChamp and otherChamp
-				for (const pair<string, int>& keyChampTrait : keyChamp.second.getTraitMap()) {
-					for (const pair<string, int>& otherChampTrait : otherChamp.second.getTraitMap()) {
-						//if trait names match, otherChamp's name is added to the list of keyChamp's connected champs. (Threats must not connect to eachother)
-						if (keyChampTrait.first == otherChampTrait.first && keyChampTrait.first != "Threat") {
-							connectedChamps.push_back(otherChamp.first); 
-							goto nextChampComparison; //once champs are found to share a trait, skip comparing other traits
-						}
-					}
-				}
+		if (variant.traits.contains("Dragon")) dragons.set(i);
+		if (variant.traits.contains("Scalescorn")) scalescorns.set(i);
+		for (const auto& [traitName, traitValue] : variant.traits) {
+			auto traitPosition = traitStringToArrPosMap.find(traitName);
+			if (traitPosition == traitStringToArrPosMap.end()) {
+				throw runtime_error(
+					"Champion variant \"" + variant.label + "\" uses unknown trait \"" + traitName + "\"."
+				);
 			}
-		nextChampComparison:; //Go here when skipping trait finding loops due to a shared trait already being found.
+			champTraitDeltasByBitPos[i].push_back({ traitPosition->second, (short)traitValue });
 		}
-		championGraph.emplace(keyChamp.first, connectedChamps); //add keyChamp and its connectedChamp list to the champGraph map
 	}
 
-	//Initializes another champion adjacency list, instead using a long-long to store each list
-	for (const pair<string, vector<string>>& champConnections : championGraph) {
-		ChampSet connections;
-		for (const string& champ : champConnections.second) {
-			connections.set(champStringToBitPosMap.at(champ));
+	for (int i = 0; i < championVariantCount; ++i) {
+		const ChampionVariantData& variant = variants[i];
+		championIdentityByBitPos[i] = canonicalChampionMasks.at(variant.canonicalName);
+		champStringToBitsetMap[variant.canonicalName] = championIdentityByBitPos[i];
+		ChampSet exactVariant;
+		exactVariant.set(i);
+		champStringToBitsetMap[variant.label] = exactVariant;
+	}
+
+	// The public graph stays canonical: two source champions connect if any of
+	// their fixed or interchangeable traits can match.
+	unordered_map<string, map<string, int>> possibleTraitsByChampion;
+	for (const auto& [championName, champion] : champInfo) {
+		map<string, int> possibleTraits = champion.getTraitMap();
+		for (const auto& [traitName, traitValue] : champion.getInterchangeableTraits()) {
+			possibleTraits[traitName] += traitValue;
 		}
-		championBitsetGraph.emplace(champConnections.first, connections);
-		championConnectionsByBitPos[champStringToBitPosMap.at(champConnections.first)] = connections;
+		possibleTraitsByChampion.emplace(championName, move(possibleTraits));
+	}
+	for (const auto& [keyChampion, keyTraits] : possibleTraitsByChampion) {
+		vector<string> connectedChamps; //records list of champions sharing a trait with keyChamp
+		for (const auto& [otherChampion, otherTraits] : possibleTraitsByChampion) {
+			if (otherChampion != keyChampion && sharesConnectingTrait(keyTraits, otherTraits)) {
+				connectedChamps.push_back(otherChampion);
+			}
+		}
+		championGraph.emplace(keyChampion, move(connectedChamps));
+	}
+
+	// Internal connections are variant-specific, so connected-only generation
+	// follows only the trait selected for that pseudo champion.
+	for (int i = 0; i < championVariantCount; ++i) {
+		ChampSet connections;
+		for (int j = 0; j < championVariantCount; ++j) {
+			if (i == j || variants[i].canonicalName == variants[j].canonicalName) continue;
+			if (sharesConnectingTrait(variants[i].traits, variants[j].traits)) connections.set(j);
+		}
+		championBitsetGraph.emplace(variants[i].label, connections);
+		championConnectionsByBitPos[i] = connections;
 	}
 
 	//Set initialized to true. Once true, objects of TeamComposition can be constructed.

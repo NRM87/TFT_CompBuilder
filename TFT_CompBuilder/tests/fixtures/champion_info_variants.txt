@@ -1,0 +1,3 @@
+Adaptive_Unit Base [Alpha|Gamma:2]
+Alpha_Ally Alpha
+Gamma_Ally Gamma

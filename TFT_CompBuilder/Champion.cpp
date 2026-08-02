@@ -29,12 +29,24 @@ void Champion::addTrait(string trait, int traitValue) {
 	this->traitTotal += traitValue;
 }
 
+void Champion::addInterchangeableTrait(string trait, int traitValue) {
+	this->interchangeableTraits.emplace_back(trait, traitValue);
+}
+
 //Returns a string representation of the champion and its traits.
 string Champion::toString() const {
 	ostringstream stream;
 	stream << left << setw(16) << (this->name + ": ");
 	for (map<string, int>::const_iterator it = traits.begin(); it != traits.end(); ++it) {
 		stream << (it->first + "(" + std::to_string(it->second) + ") ");
+	}
+	if (!interchangeableTraits.empty()) {
+		stream << "[";
+		for (size_t i = 0; i < interchangeableTraits.size(); ++i) {
+			if (i > 0) stream << "|";
+			stream << interchangeableTraits[i].first << "(" << interchangeableTraits[i].second << ")";
+		}
+		stream << "]";
 	}
 	string s = stream.str();
 	return s;

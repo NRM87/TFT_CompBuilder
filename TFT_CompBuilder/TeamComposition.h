@@ -11,12 +11,12 @@ using namespace std;
 using ChampSet = bitset<128>;
 
 //TeamCompositions are essentially sets of Champions with infrastructure to keep track of stats relevant to the Teamfight Tactics game.
-//Internally, the set is a 128 bitset where each bit corresponds to a different champion, determined in initalizeStatics. 
-//Because of this, static fields which help enforce the corresponding bit positions and champions should be first initialized before comp objects can be used.
+//Internally, the set is a 128 bitset where each bit corresponds to a champion variant, determined in initializeStatics.
+//Variants from one canonical champion share an exclusion mask, so at most one can be present in a composition.
 class TeamComposition {
 public:
 	//Constructor, only works once static fields have been initialized in initializeStatics
-	TeamComposition() : compSize(0), champions(0), connectedChamps(0)
+	TeamComposition() : compSize(0), champions(0), connectedChamps(0), blockedChampionVariants(0)
 	{
 		if (!initialized) throw runtime_error("TeamComposition statics not initialized.");
 		for (int i = 0; i < currentSetTraits.size(); ++i) {
@@ -71,27 +71,31 @@ private:
 	//There shouldn't be more than 32 traits, and values for compSize and any compTraits[n] should never exceed 128 based on typical Teamfight Tactics numbers
 	short compSize; //total width of champions in the comp
 	short compTraits[32]; //each trait and its active amount for the comp
-	bitset<128> champions; //bit set of champions in the comp
-	bitset<128> connectedChamps; //bit set of champions not already in the comp that share traits with any of the champions in the comp
+	bitset<128> champions; //bit set of internal champion variants in the comp
+	bitset<128> connectedChamps; //available variants that share traits with a selected variant
+	bitset<128> blockedChampionVariants; //selected variants plus every interchangeable variant of the same canonical champion
 
 	static bool initialized; //keeps track of if static fields have been properly initialized
 	static const int MAX_COMP_SIZE = 10; //maximum comp size for generateComps algorithm
 
-	//Sets of champions that have a certain trait. In 64bit form to easily operate with comp objects.
+	//Sets of champion variants that have certain traits.
 	static ChampSet dragons; 
 	static ChampSet scalescorns;
 
 	//Static fields for champion and trait information.
 	static unordered_map<string, Champion> globalChampInfoMap; //map of champ name to Champion object
-	static unordered_map<string, vector<string>> championGraph; //map of champ to set of champs sharing a trait
-	static unordered_map<string, ChampSet> championBitsetGraph; //map of champ to 64bit set of champs sharing a trait
+	static int championVariantCount;
+	static unordered_map<string, vector<string>> championGraph; //canonical champions connected by any possible trait
+	static unordered_map<string, ChampSet> championBitsetGraph; //internal variant connections
 	static unordered_map<string, vector<int>> currentSetTraits; //map of traits to their trait milestones
 	static short champWidthByBitPos[128];
 	static ChampSet championConnectionsByBitPos[128];
+	static ChampSet championIdentityByBitPos[128];
 	static vector<TraitDelta> champTraitDeltasByBitPos[128];
 
-	//Static fields for converting trait or champion strings to their corresponding positions in arrays or 64bit sets, respectively
+	//Static fields for converting trait and champion labels to their corresponding positions and masks.
 	static unordered_map<string, int> champStringToBitPosMap;
+	static unordered_map<string, ChampSet> champStringToBitsetMap;
 	static string champBitPosToStringMap[];
 	static unordered_map<string, short> traitStringToArrPosMap;
 	static string traitArrPosToStringMap[];
