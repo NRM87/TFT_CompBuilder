@@ -96,6 +96,14 @@ bool TeamComposition::containsChamp(const string& champion) const {
 	return (champions & it->second).any();
 }
 
+vector<string> TeamComposition::getChampionLabels() const {
+	vector<string> labels;
+	for (int i = 0; i < championVariantCount; ++i) {
+		if (champions.test(i)) labels.push_back(champBitPosToStringMap[i]);
+	}
+	return labels;
+}
+
 //Returns a string representation of the comp
 string TeamComposition::toString() const {
 	string s = "";
@@ -480,6 +488,8 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 //Initializes champStringTo64BitMap, champ64BitToStringMap, traitStringToShortMap, and traitShortToStringMap with correct string-position pairs
 void TeamComposition::initializeStatics(unordered_map<string, vector<int>> traitData, unordered_map<string, Champion> champInfo) {
 	initialized = false;
+	gateTableInitialized = false;
+	currentGateTable = GateTable{};
 	currentSetTraits = traitData;
 	globalChampInfoMap = champInfo;
 

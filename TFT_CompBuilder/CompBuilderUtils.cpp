@@ -14,8 +14,6 @@ using json = nlohmann::json;
 #define SETINFODIR(set) ("SetInfos\\Set" + set)
 #define CHAMPINFOFILE(set) (SETINFODIR(set) + "\\ChampionInfo.txt")
 #define TRAITINFOFILE(set) (SETINFODIR(set) + "\\TraitInfo.txt")
-#define GATEINFOFILE(set) (SETINFODIR(set) + "\\Gates.json")
-#define TEMPGATEINFOFILE(set) (SETINFODIR(set) + "\\Gates.json.tmp")
 
 namespace {
 	int parsePositiveChampionValue(const string& value, const string& token, const string& championName) {
@@ -56,34 +54,6 @@ namespace {
 		return { traitName, traitValue };
 	}
 
-	string getEmblemGateKey(const vector<string>& emblemTraits) {
-		if (emblemTraits.empty()) return "";
-
-		vector<string> normalizedTraits = emblemTraits;
-		sort(normalizedTraits.begin(), normalizedTraits.end());
-
-		ostringstream key;
-		for (size_t i = 0; i < normalizedTraits.size(); ++i) {
-			if (i > 0) key << "__";
-			key << normalizedTraits[i];
-		}
-		return key.str();
-	}
-
-	string getGateDirectory(const string& setNum, const vector<string>& emblemTraits) {
-		if (emblemTraits.empty()) return SETINFODIR(setNum);
-		return SETINFODIR(setNum) + "\\EmblemGates";
-	}
-
-	string getGateFilePath(const string& setNum, const vector<string>& emblemTraits) {
-		if (emblemTraits.empty()) return GATEINFOFILE(setNum);
-		return getGateDirectory(setNum, emblemTraits) + "\\" + getEmblemGateKey(emblemTraits) + ".json";
-	}
-
-	string getTempGateFilePath(const string& setNum, const vector<string>& emblemTraits) {
-		if (emblemTraits.empty()) return TEMPGATEINFOFILE(setNum);
-		return getGateDirectory(setNum, emblemTraits) + "\\" + getEmblemGateKey(emblemTraits) + ".json.tmp";
-	}
 }
 
 //Read champion information from text file into a map
@@ -279,74 +249,6 @@ void validateSetData(const unordered_map<string, Champion>& champions, const uno
 			message << "\n- ...and " << (issues.size() - issuesToPrint) << " more issue(s).";
 		}
 		throw runtime_error(message.str());
-	}
-}
-
-GateTable readGateTable(const string& setNum, const vector<string>& emblemTraits) {
-	string gateFilePath = getGateFilePath(setNum, emblemTraits);
-	if (!emblemTraits.empty() && !std::filesystem::exists(gateFilePath)) {
-		gateFilePath = getGateFilePath(setNum, {});
-	}
-
-	ifstream gateInfo(gateFilePath);
-	if (!gateInfo.is_open()) {
-		throw runtime_error("Could Not Open Gate File: " + gateFilePath);
-	}
-
-	json gateJson = json::parse(gateInfo);
-	GateTable gates;
-	gates.activeTraitGates = gateJson.at("active_trait_gates").get<decltype(gates.activeTraitGates)>();
-	gates.activeTierGates = gateJson.at("active_tier_gates").get<decltype(gates.activeTierGates)>();
-	return gates;
-}
-
-void writeGateTable(const string& setNum, const GateTable& gates, const vector<string>& emblemTraits) {
-	std::filesystem::create_directories(getGateDirectory(setNum, emblemTraits));
-	string gateFileName = getGateFilePath(setNum, emblemTraits);
-	string tempGateFileName = getTempGateFilePath(setNum, emblemTraits);
-	ofstream gateInfo(tempGateFileName);
-	if (!gateInfo.is_open()) {
-		throw runtime_error("Could Not Open Gate Temp File For Writing: " + tempGateFileName);
-	}
-
-	gateInfo << "{\n";
-	gateInfo << "  \"generator_version\": 1,\n";
-	gateInfo << "  \"active_trait_gates\": [\n";
-	for (int row = 0; row < GateTable::SIZE; ++row) {
-		gateInfo << "    [";
-		for (int col = 0; col < GateTable::SIZE; ++col) {
-			if (col > 0) gateInfo << ", ";
-			gateInfo << gates.activeTraitGates[row][col];
-		}
-		gateInfo << "]";
-		if (row + 1 < GateTable::SIZE) gateInfo << ",";
-		gateInfo << "\n";
-	}
-	gateInfo << "  ],\n";
-	gateInfo << "  \"active_tier_gates\": [\n";
-	for (int row = 0; row < GateTable::SIZE; ++row) {
-		gateInfo << "    [";
-		for (int col = 0; col < GateTable::SIZE; ++col) {
-			if (col > 0) gateInfo << ", ";
-			gateInfo << gates.activeTierGates[row][col];
-		}
-		gateInfo << "]";
-		if (row + 1 < GateTable::SIZE) gateInfo << ",";
-		gateInfo << "\n";
-	}
-	gateInfo << "  ]\n";
-	gateInfo << "}\n";
-	gateInfo.close();
-
-	std::error_code fsError;
-	std::filesystem::rename(tempGateFileName, gateFileName, fsError);
-	if (fsError) {
-		std::filesystem::remove(gateFileName, fsError);
-		fsError.clear();
-		std::filesystem::rename(tempGateFileName, gateFileName, fsError);
-		if (fsError) {
-			throw runtime_error("Could Not Replace Gate File: " + gateFileName + " (" + fsError.message() + ")");
-		}
 	}
 }
 

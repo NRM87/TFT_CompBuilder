@@ -29,6 +29,7 @@ public:
 	int getActiveTraitTiersTotal() const; 
 	int getActiveTraitsTotal() const;
 	bool containsChamp(const string& champion) const;
+	vector<string> getChampionLabels() const;
 	string toString() const; 
 
 	//Mutators
