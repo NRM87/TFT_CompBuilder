@@ -165,6 +165,8 @@
     <Text Include="SetInfos\Set16\TraitInfo.txt" />
     <Text Include="SetInfos\Set17\ChampionInfo.txt" />
     <Text Include="SetInfos\Set17\TraitInfo.txt" />
+    <Text Include="SetInfos\Set18\ChampionInfo.txt" />
+    <Text Include="SetInfos\Set18\TraitInfo.txt" />
     <Text Include="SetInfos\Set7\ChampionInfo.txt" />
     <Text Include="SetInfos\Set7\TraitInfo.txt" />
     <Text Include="SetInfos\Set8.5\ChampionInfo.txt" />

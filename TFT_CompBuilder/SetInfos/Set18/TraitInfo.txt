@@ -1,0 +1,25 @@
+Adaptor 2 3 4
+Blackthorn 2 4 6
+Blossom 3 5 7 9 11
+Brawler 2 4 6
+Coven 3 4 5 7
+Defender 2 4 6
+Elderwood 3 5 7 9 11
+Executioner 2 3 4
+Fae 2 4
+Flora_Fatalis 1 2
+Hunter 2 3 4 5
+Inferno 2 3 5 7
+Invoker 2 3 4 5
+Juggernaut 2 4 6
+Lunar 2 3 4 5
+Primal 2 4
+Rapidfire 2 3 4 5
+Ravager 2 4 6
+Riftbeast 3 5 7 10
+Rival 1 2
+Solar 3
+Spellweaver 2 4 6
+Sprykin 3 5 7
+Summoner 2 3
+Vanguard 2 4 6
