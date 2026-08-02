@@ -67,6 +67,9 @@ Usage: TFT_CompBuilder.exe [options]
       --gate-timeout <s>   Gate probe timeout in seconds (default: 10)
       --refresh            Ignore matching caches and recalculate gates
       --no-cache           Do not read or write the disk cache
+      --cache-info         Show cache usage and exit
+      --cache-prune        Remove stale, invalid, and orphaned cache data, then exit
+      --cache-max-mb <n>   With --cache-prune, evict least-recently-used entries to this limit
       --interactive        Use the prompt-driven setup flow
   -i, --input <path>       Read interactive answers from a file; implies --interactive
   -h, --help               Show command help
@@ -112,6 +115,24 @@ Force fresh gate and composition calculation:
 ..\x64\Release\TFT_CompBuilder.exe --refresh
 ```
 
+Inspect the disk cache without running a composition search:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --cache-info
+```
+
+Remove incomplete writes, invalid manifests, orphaned objects, and legacy v1 cache files:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --cache-prune
+```
+
+Do the same cleanup and then evict the least-recently-used entries until the cache is at most 512 MiB:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --cache-prune --cache-max-mb 512
+```
+
 Use the original prompt-driven workflow:
 
 ```powershell
@@ -130,13 +151,23 @@ Generated files are stored beneath:
 
 ```text
 TFT_CompBuilder\Cache\
-  gates\
-  compositions\
+  v2\
+    manifests\
+      gates\
+      compositions\
+    objects\
+      gates\
+      compositions\
+    staging\
 ```
 
-`Cache` is ignored by Git. Cache identities account for the set, champion and trait file contents, gate type, emblem multiset, connected-only mode, gate timeout, build profile, algorithm version, team size, and exact gate row. Editing `ChampionInfo.txt` or `TraitInfo.txt` therefore invalidates affected entries automatically.
+`Cache` is ignored by Git. Small request manifests point to immutable, SHA-256-addressed gate and composition objects. Composition objects use a champion-label dictionary to avoid repeating full names in every row. An exact composition hit only needs its composition manifest and object; it does not need the corresponding gate cache to still exist.
+
+Cache identities account for the set, champion and trait file contents, gate type, emblem multiset, connected-only mode, gate timeout, build profile, executable fingerprint, and team size. Editing `ChampionInfo.txt` or `TraitInfo.txt`, changing a cache-relevant option, or rebuilding a changed executable therefore selects a fresh cache entry automatically. Writes are serialized between processes and published atomically. A cache read, validation, or write failure is treated as a cache miss so it cannot prevent a calculation from completing.
 
 Use `--refresh` to replace the matching cached calculation, or `--no-cache` for a run that neither reads nor writes cached data.
+
+`--cache-prune` is conservative unless a size limit is supplied: it removes temporary files, invalid manifests, orphaned immutable objects, and old v1 `gates`/`compositions` directories. Adding `--cache-max-mb` also evicts manifests in least-recently-used order and removes objects that become unreferenced. Existing v1 files are not migrated because they do not contain the stronger v2 identity and integrity metadata.
 
 ## Set data
 
@@ -151,21 +182,3 @@ TFT_CompBuilder\SetInfos\Set18\
 The default set is the highest numeric directory containing both files. Adding a later `Set<number>` directory therefore updates the default without recompiling the program.
 
 Champion entries support weighted traits, wide champions, and interchangeable trait choices. See existing set files and the parser comments in `CompBuilderUtils.h` for the exact syntax.
-
-## Troubleshooting
-
-### Could not open a champion, trait, or set-data file
-
-The executable is probably running with the wrong working directory. Change to the inner `TFT_CompBuilder` directory before launching it.
-
-### The first run is slow
-
-This is expected for an uncached size-9 request. Use a Release x64 build and allow the first run to populate `Cache`. Use a smaller `--size` while checking configuration or set data.
-
-### Visual Studio starts the program in the wrong directory
-
-Open the project properties and set **Debugging > Working Directory** to `$(ProjectDir)`, or run the executable from PowerShell as shown above.
-
-### Cache results should be recalculated
-
-Run with `--refresh`. Changes to champion or trait files are detected automatically, but `--refresh` is useful when deliberately retuning gates with the same inputs or timeout.

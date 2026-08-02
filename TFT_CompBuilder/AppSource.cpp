@@ -37,6 +37,9 @@ namespace {
 		int gateTimeoutSeconds = DEFAULT_GATE_TIMEOUT_SECONDS;
 		bool refreshCache = false;
 		bool useCache = true;
+		bool showCacheInfo = false;
+		bool pruneCache = false;
+		optional<uintmax_t> cacheMaximumBytes;
 		bool interactive = false;
 		bool showHelp = false;
 	};
@@ -143,6 +146,24 @@ namespace {
 			else if (argument == "--no-cache") {
 				options.useCache = false;
 			}
+			else if (argument == "--cache-info") {
+				options.showCacheInfo = true;
+			}
+			else if (argument == "--cache-prune") {
+				options.pruneCache = true;
+			}
+			else if (argument == "--cache-max-mb") {
+				uintmax_t megabytes = static_cast<uintmax_t>(parseIntegerOption(
+					readOptionValue(i, argumentCount, arguments, argument), argument, 0, numeric_limits<int>::max()
+				));
+				options.cacheMaximumBytes = megabytes * 1024 * 1024;
+			}
+			else if (argument.starts_with("--cache-max-mb=")) {
+				uintmax_t megabytes = static_cast<uintmax_t>(parseIntegerOption(
+					argument.substr(15), "--cache-max-mb", 0, numeric_limits<int>::max()
+				));
+				options.cacheMaximumBytes = megabytes * 1024 * 1024;
+			}
 			else if (argument == "--interactive") {
 				options.interactive = true;
 			}
@@ -157,8 +178,37 @@ namespace {
 		if (options.inputPath.has_value() && options.inputPath->empty()) {
 			throw runtime_error("--input requires a non-empty file path or '-' for standard input.");
 		}
+		if (options.cacheMaximumBytes.has_value() && !options.pruneCache) {
+			throw runtime_error("--cache-max-mb must be used with --cache-prune.");
+		}
 		if (options.inputPath.has_value()) options.interactive = true;
 		return options;
+	}
+
+	string formatBytes(uintmax_t bytes) {
+		static const char* units[] = { "B", "KiB", "MiB", "GiB", "TiB" };
+		double amount = static_cast<double>(bytes);
+		size_t unit = 0;
+		while (amount >= 1024.0 && unit + 1 < size(units)) {
+			amount /= 1024.0;
+			++unit;
+		}
+		ostringstream output;
+		output << fixed << setprecision(unit == 0 ? 0 : 2) << amount << ' ' << units[unit];
+		return output.str();
+	}
+
+	void printCacheInventory(const CompositionCacheInventory& inventory) {
+		cout
+			<< "Cache size:              " << formatBytes(inventory.totalBytes) << " in " << inventory.totalFiles << " files\n"
+			<< "Gate manifests/objects:  " << inventory.gateManifests << " / " << inventory.gateObjects << '\n'
+			<< "Comp manifests/objects:  " << inventory.compositionManifests << " / " << inventory.compositionObjects << '\n'
+			<< "Cached compositions:     " << inventory.cachedCompositions << '\n'
+			<< "Object data:             " << formatBytes(inventory.objectBytes) << '\n'
+			<< "Orphaned objects:        " << inventory.orphanedObjects << " (" << formatBytes(inventory.orphanedBytes) << ")\n"
+			<< "Invalid manifests:       " << inventory.invalidManifests << '\n'
+			<< "Temporary files:         " << inventory.temporaryFiles << '\n'
+			<< "Legacy cache files:      " << inventory.legacyFiles << " (" << formatBytes(inventory.legacyBytes) << ")\n";
 	}
 
 	string findLatestSet() {
@@ -198,6 +248,9 @@ namespace {
 			<< "      --gate-timeout <s>   Gate probe timeout in seconds (default: 10).\n"
 			<< "      --refresh            Ignore matching caches and recalculate gates.\n"
 			<< "      --no-cache           Do not read or write the disk cache.\n"
+			<< "      --cache-info         Show cache usage and exit.\n"
+			<< "      --cache-prune        Remove stale, invalid, and orphaned cache data, then exit.\n"
+			<< "      --cache-max-mb <n>   With --cache-prune, evict least-recently-used entries to this limit.\n"
 			<< "      --interactive        Use the legacy prompt-driven setup flow.\n"
 			<< "  -i, --input <path>       Read interactive answers from a file; implies --interactive.\n"
 			<< "  -h, --help               Show this help message.\n\n"
@@ -211,6 +264,17 @@ int main(int argc, char* argv[]) {
 		CommandLineOptions options = parseCommandLine(argc, argv);
 		if (options.showHelp) {
 			printUsage();
+			return 0;
+		}
+		if (options.pruneCache) {
+			CompositionCachePruneResult result = pruneCompositionCache("Cache", options.cacheMaximumBytes);
+			cout << "Cache pruning complete: removed " << result.removedFiles << " files ("
+				<< formatBytes(result.removedBytes) << ").\n";
+			printCacheInventory(result.after);
+			return 0;
+		}
+		if (options.showCacheInfo) {
+			printCacheInventory(inspectCompositionCache("Cache"));
 			return 0;
 		}
 
