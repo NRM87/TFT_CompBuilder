@@ -1,6 +1,6 @@
 Alune Lunar Spellweaver
 Ashe Blossom Hunter
-Elder_Dragon Riftbeast Riftbeast
+Elder_Dragon Riftbeast:2 @width=2
 Gnar Elderwood Sprykin Brawler
 Kennen Inferno Executioner
 Maokai Juggernaut

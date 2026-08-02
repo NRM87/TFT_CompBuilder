@@ -112,14 +112,41 @@ void TeamComposition::incrementTrait(const string& trait) {
 	++compTraits[it->second];
 }
 
-TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSet, int targetCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds, bool* timedOut) {
+TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSet, int targetCompSize, int iterationCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds, bool* timedOut) {
 	const int champCount = (int)globalChampInfoMap.size();
 	CompSet nextCompSet;
 	currTraitValMax = 0;
 	auto iterationStart = std::chrono::steady_clock::now();
 	if (timedOut) *timedOut = false;
 
+	auto addCandidate = [&](const TeamComposition& candidate) {
+		// A wide champion can advance beyond this board-width layer. Carry that
+		// composition forward and apply pruning when its occupied width is reached.
+		if (candidate.compSize > iterationCompSize) {
+			nextCompSet.emplace(candidate);
+			return;
+		}
+
+		if (!settings[0]) {
+			int traitValue = (settings[1] == 1 ? candidate.getActiveTraitTiersTotal() : candidate.getActiveTraitsTotal());
+			if (traitValue > currTraitValMax) currTraitValMax = traitValue;
+			if (settings[1] == 2) {
+				if (traitValue < prevTraitValMax + 1) return;
+			}
+			else if (traitValue < gateBound) {
+				return;
+			}
+		}
+
+		nextCompSet.emplace(candidate);
+	};
+
 	for (const TeamComposition& currComp : compSet) {
+		if (currComp.compSize >= iterationCompSize) {
+			if (currComp.compSize <= targetCompSize) addCandidate(currComp);
+			continue;
+		}
+
 		ChampSet connections;
 		if (settings[2] && currComp.size() > 0) connections = currComp.connectedChamps; //only consider champs that share traits with the current comp's champs
 		else connections = ~currComp.champions; //consider every champ not in the current comp already
@@ -139,19 +166,7 @@ TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSe
 
 			TeamComposition nextComp(currComp);
 			nextComp.addChamp(i);
-
-			if (!settings[0]) {
-				int traitValue = (settings[1] == 1 ? nextComp.getActiveTraitTiersTotal() : nextComp.getActiveTraitsTotal());
-				if (traitValue > currTraitValMax) currTraitValMax = traitValue;
-				if (settings[1] == 2) {
-					if (traitValue < prevTraitValMax + 1) continue;
-				}
-				else if (traitValue < gateBound) {
-					continue;
-				}
-			}
-
-			nextCompSet.emplace(nextComp);
+			addCandidate(nextComp);
 		}
 	}
 
@@ -190,7 +205,7 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 				? currentGateTable.activeTierGates[compSize - 1][currCompSize - 1]
 				: currentGateTable.activeTraitGates[compSize - 1][currCompSize - 1]);
 		}
-		CompSet nextCompSet = buildNextCompSet(compSet, compSize, settings, gateBound, prevTraitValMax, currTraitValMax, elapsedSeconds);
+		CompSet nextCompSet = buildNextCompSet(compSet, compSize, currCompSize, settings, gateBound, prevTraitValMax, currTraitValMax, elapsedSeconds);
 		prevTraitValMax = currTraitValMax;
 		compSet.swap(nextCompSet);
 	}
@@ -263,7 +278,7 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 			while (true) {
 				int currentLayerMaxTraitValue = 0;
 				double currentLayerElapsedSeconds = 0.0;
-				CompSet nextCompSet = buildNextCompSet(compSet, targetCompSize, settings, gateBound, prevTraitValMax, currentLayerMaxTraitValue, currentLayerElapsedSeconds);
+				CompSet nextCompSet = buildNextCompSet(compSet, targetCompSize, iterationCompSize, settings, gateBound, prevTraitValMax, currentLayerMaxTraitValue, currentLayerElapsedSeconds);
 				cout << "Gate calc | mode=" << pruningMode
 					<< " target=" << targetCompSize
 					<< " iter=" << iterationCompSize
@@ -313,7 +328,7 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 					int probeMaxTraitValue = 0;
 					double probeElapsedSeconds = 0.0;
 					bool timedOut = false;
-					CompSet probeCompSet = buildNextCompSet(nextCompSet, targetCompSize, settings, 0, currentLayerMaxTraitValue, probeMaxTraitValue, probeElapsedSeconds, (double)timeoutSeconds, &timedOut);
+					CompSet probeCompSet = buildNextCompSet(nextCompSet, targetCompSize, iterationCompSize + 1, settings, 0, currentLayerMaxTraitValue, probeMaxTraitValue, probeElapsedSeconds, (double)timeoutSeconds, &timedOut);
 					cout << " probe_elapsed=" << probeElapsedSeconds << "s"
 						<< " probe_comps=" << probeCompSet.size();
 

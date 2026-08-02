@@ -1,19 +1,19 @@
 Aatrox Shimmerscale Warrior
 Anivia Jade Evoker Legend
-Ao_Shin Tempest Dragon Tempest
+Ao_Shin Tempest:3 Dragon @width=2
 Ashe Jade Dragonmancer Swiftshot
-Aurelion_Sol Astral Evoker Dragon Astral
+Aurelion_Sol Astral:3 Evoker Dragon @width=2
 Bard Guild Mystic Bard
 Braum Scalescorn Guardian
 Corki Revel Cannoneer
-Daeja Mirage Dragon Mirage
+Daeja Mirage:3 Dragon @width=2
 Diana Scalescorn Assassin
 Elise Whispers Shapeshifter
 Ezreal Tempest Swiftshot
 Gnar Jade Shapeshifter
 Hecarim Ragewing Cavalier
 Heimerdinger Trainer Mage
-Idas Shimmerscale Guardian Dragon Shimmerscale
+Idas Shimmerscale:3 Guardian Dragon @width=2
 Illaoi Astral Bruiser
 Jinx Revel Cannoneer
 Karma Jade Dragonmancer
@@ -35,13 +35,13 @@ Sejuani Guild Cavalier
 Senna Ragewing Cannoneer
 Sett Ragewing Dragonmancer
 Shen Ragewing Warrior Bruiser
-Shi_Oh_Yu Jade Mystic Dragon Jade
-Shyvana Ragewing Shapeshifter Dragon Ragewing
+Shi_Oh_Yu Jade:3 Mystic Dragon @width=2
+Shyvana Ragewing:3 Shapeshifter Dragon @width=2
 Skarner Astral Bruiser
 Sona Revel Evoker
 Soraka Jade Starcaller
 Swain Ragewing Dragonmancer Shapeshifter
-Sy'fen Whispers Bruiser Dragon Whispers
+Sy'fen Whispers:3 Bruiser Dragon @width=2
 Sylas Whispers Mage Bruiser
 Tahm_Kench Revel Bruiser
 Talon Guild Assassin

@@ -17,6 +17,26 @@ using json = nlohmann::json;
 #define TEMPGATEINFOFILE(set) (SETINFODIR(set) + "\\Gates.json.tmp")
 
 namespace {
+	int parsePositiveChampionValue(const string& value, const string& token, const string& championName) {
+		size_t parsedCharacters = 0;
+		int parsedValue = 0;
+		try {
+			parsedValue = stoi(value, &parsedCharacters);
+		}
+		catch (const exception&) {
+			throw runtime_error(
+				"Invalid champion info token \"" + token + "\" for \"" + championName + "\". Expected a positive integer."
+			);
+		}
+
+		if (parsedCharacters != value.size() || parsedValue < 1) {
+			throw runtime_error(
+				"Invalid champion info token \"" + token + "\" for \"" + championName + "\". Expected a positive integer."
+			);
+		}
+		return parsedValue;
+	}
+
 	string getEmblemGateKey(const vector<string>& emblemTraits) {
 		if (emblemTraits.empty()) return "";
 
@@ -49,60 +69,79 @@ namespace {
 
 //Read champion information from text file into a map
 void readChampInfo(string fileName, unordered_map<string, Champion>& champions) {
-	ifstream champInfo;
-	champInfo.open(fileName);
+	ifstream champInfo(fileName);
 	if (!champInfo.is_open()) {
 		throw runtime_error("Could Not Open Champion File");
 	}
-	istringstream line;
-	while (!champInfo.eof()) {
-		string holder;
-		getline(champInfo, holder); //holder now holds the next line, a champ and its traits
-		line.clear();
-		line.str(holder);
-		line >> holder; //holder now holds the first string in the line, the champ's name
-		Champion champ(holder);
-		while (!line.eof()) {
-			line >> holder; //holder now holds the next string in the line, a trait
-			champ.addTrait(holder);
-			if (holder == "Dragon77") {
-				line >> holder; //reads dragon-enhanced trait, which should come right after "Dragon" in the text file
-				champ.addTrait(holder, 2);
-				champ.setWidth(2);
+
+	string championLine;
+	while (getline(champInfo, championLine)) {
+		istringstream line(championLine);
+		string championName;
+		if (!(line >> championName)) continue;
+
+		Champion champ(championName);
+		string token;
+		while (line >> token) {
+			static const string WIDTH_PREFIX = "@width=";
+			if (token.starts_with(WIDTH_PREFIX)) {
+				champ.setWidth(parsePositiveChampionValue(
+					token.substr(WIDTH_PREFIX.size()),
+					token,
+					championName
+				));
+				continue;
 			}
+
+			string traitName = token;
+			int traitValue = 1;
+			size_t valueSeparator = token.rfind(':');
+			if (valueSeparator != string::npos) {
+				traitName = token.substr(0, valueSeparator);
+				if (traitName.empty()) {
+					throw runtime_error("Invalid empty trait name in champion info token \"" + token + "\" for \"" + championName + "\".");
+				}
+				traitValue = parsePositiveChampionValue(
+					token.substr(valueSeparator + 1),
+					token,
+					championName
+				);
+			}
+			champ.addTrait(traitName, traitValue);
 		}
-		champions.emplace(champ.getName(), champ);
+
+		if (!champions.emplace(champ.getName(), champ).second) {
+			throw runtime_error("Champion already exists while reading champion info file: " + championName);
+		}
 	}
-	line.clear();
-	champInfo.close();
 }
 
 //Read trait information from text file into a map
 void readTraitInfo(string fileName, unordered_map<string, vector<int>>& traits) {
-	ifstream traitInfo;
-	traitInfo.open(fileName);
+	ifstream traitInfo(fileName);
 	if (!traitInfo.is_open()) {
 		throw runtime_error("Could Not Open Trait File");
 	}
-	istringstream line;
-	while (!traitInfo.eof()) {
-		string holder;
-		getline(traitInfo, holder); //holder now holds the next line, a trait and its milestones
-		line.clear();
-		line.str(holder);
-		line >> holder; //holder now holds the first string in the line, the trait's name
+
+	string traitLine;
+	while (getline(traitInfo, traitLine)) {
+		istringstream line(traitLine);
+		string traitName;
+		if (!(line >> traitName)) continue;
+
 		vector<int> traitMilestones;
-		while (!line.eof()) {
-			int traitMilestone;
-			line >> traitMilestone;
+		int traitMilestone = 0;
+		while (line >> traitMilestone) {
 			traitMilestones.push_back(traitMilestone);
 		}
-		if (traitMilestones.size() == 0) throw runtime_error("Trait milestone not found while reading trait info file.");
-		if (traits.contains(holder)) throw runtime_error("Trait already exists while reading trait info file.");
-		traits.emplace(holder, traitMilestones);
+		if (!line.eof()) {
+			throw runtime_error("Invalid trait milestone while reading trait info for \"" + traitName + "\".");
+		}
+		if (traitMilestones.empty()) throw runtime_error("Trait milestone not found while reading trait info file.");
+		if (!traits.emplace(traitName, traitMilestones).second) {
+			throw runtime_error("Trait already exists while reading trait info file: " + traitName);
+		}
 	}
-	line.clear();
-	traitInfo.close();
 }
 
 void validateSetData(const unordered_map<string, Champion>& champions, const unordered_map<string, vector<int>>& traits) {

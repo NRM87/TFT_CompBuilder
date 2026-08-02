@@ -99,7 +99,7 @@ private:
 	static bool gateTableInitialized;
 
 	bool addChamp(int champBitPos);
-	static CompSet buildNextCompSet(const CompSet& compSet, int targetCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds = -1.0, bool* timedOut = nullptr);
+	static CompSet buildNextCompSet(const CompSet& compSet, int targetCompSize, int iterationCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds = -1.0, bool* timedOut = nullptr);
 
 	/* OLD COMP-GENERATING ALGORITHM FUNCTIONS
 	static vector<TeamCompositionLite> getTeamCompList(int compSize); 

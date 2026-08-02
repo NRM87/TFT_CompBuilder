@@ -16,7 +16,8 @@ struct GateTable {
 	std::array<std::array<int, SIZE>, SIZE> activeTierGates{};
 };
 
-//Functions for reading files with trait and champion information into maps
+// Functions for reading files with trait and champion information into maps.
+// Champion tokens support Trait:N for an N-point trait contribution and @width=N for board width.
 void readChampInfo(string fileName, unordered_map<string, Champion>& champions);
 void readTraitInfo(string fileName, unordered_map<string, vector<int>>& traits);
 void validateSetData(const unordered_map<string, Champion>& champions, const unordered_map<string, vector<int>>& traits);
