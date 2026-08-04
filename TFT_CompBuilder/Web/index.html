@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Build and explore Teamfight Tactics compositions using locally calculated trait gates.">
+  <title>TFT Comp Builder</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">TC</div>
+        <div>
+          <p class="eyebrow">Local strategy workbench</p>
+          <h1>TFT Comp Builder</h1>
+        </div>
+      </div>
+      <div class="engine-status"><span></span> Local engine</div>
+    </header>
+
+    <main class="workspace">
+      <aside class="control-column" aria-label="Composition settings">
+        <section class="panel setup-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="step-label">01 · Configure</p>
+              <h2>Search parameters</h2>
+            </div>
+          </div>
+
+          <form id="build-form">
+            <label class="field-label" for="set-select">Set</label>
+            <select id="set-select" name="set" required></select>
+            <p id="set-meta" class="field-note">Loading local set data…</p>
+
+            <div class="field-row split">
+              <div>
+                <label class="field-label" for="size-input">Board size</label>
+                <div class="range-line">
+                  <input id="size-input" type="range" min="1" max="10" value="9">
+                  <output id="size-output" for="size-input">9</output>
+                </div>
+              </div>
+              <div>
+                <label class="field-label" for="timeout-input">Probe timeout</label>
+                <div class="number-suffix">
+                  <input id="timeout-input" type="number" min="1" max="3600" value="10">
+                  <span>sec</span>
+                </div>
+              </div>
+            </div>
+
+            <fieldset>
+              <legend>Gate objective</legend>
+              <div class="segmented-control">
+                <label><input type="radio" name="gate-type" value="traits" checked><span>Active traits</span></label>
+                <label><input type="radio" name="gate-type" value="tiers"><span>Trait tiers</span></label>
+              </div>
+            </fieldset>
+
+            <label class="field-label" for="emblem-input">Emblems</label>
+            <div class="input-action">
+              <input id="emblem-input" list="trait-options" autocomplete="off" placeholder="Choose a trait">
+              <button id="add-emblem" class="secondary-button compact" type="button">Add</button>
+            </div>
+            <datalist id="trait-options"></datalist>
+            <div id="emblem-list" class="chip-list" aria-live="polite"></div>
+            <p class="field-note">Duplicate emblems are allowed.</p>
+
+            <label class="toggle-row">
+              <input id="connected-input" type="checkbox">
+              <span class="toggle-control" aria-hidden="true"></span>
+              <span><strong>Connected champions only</strong><small>Only extend through shared traits.</small></span>
+            </label>
+
+            <details class="advanced-settings">
+              <summary>Cache controls for this run</summary>
+              <label class="check-row"><input id="refresh-input" type="checkbox"> Recalculate matching gates</label>
+              <label class="check-row"><input id="cache-input" type="checkbox" checked> Read and write disk cache</label>
+            </details>
+
+            <button id="build-button" class="primary-button" type="submit">
+              <span>Build compositions</span><span aria-hidden="true">→</span>
+            </button>
+          </form>
+        </section>
+
+        <section class="panel cache-panel">
+          <div class="panel-heading compact-heading">
+            <div>
+              <p class="step-label">Local storage</p>
+              <h2>Cache health</h2>
+            </div>
+            <button id="refresh-cache" class="icon-button" type="button" aria-label="Refresh cache information">↻</button>
+          </div>
+          <div class="cache-meter"><span id="cache-meter-fill"></span></div>
+          <div class="cache-stats">
+            <div><span>Stored</span><strong id="cache-size">—</strong></div>
+            <div><span>Compositions</span><strong id="cache-compositions">—</strong></div>
+            <div><span>Cleanup candidates</span><strong id="cache-orphans">—</strong></div>
+          </div>
+          <div class="input-action cache-action">
+            <div class="number-suffix">
+              <input id="cache-limit" type="number" min="0" placeholder="No limit" aria-label="Optional cache size limit in megabytes">
+              <span>MiB</span>
+            </div>
+            <button id="prune-cache" class="secondary-button" type="button">Prune</button>
+          </div>
+          <p id="cache-message" class="field-note" aria-live="polite">Safe cleanup keeps referenced entries.</p>
+        </section>
+      </aside>
+
+      <section class="results-column" aria-label="Composition results">
+        <div id="status-card" class="status-card idle" aria-live="polite">
+          <div class="status-icon"><span></span></div>
+          <div>
+            <p id="status-kicker" class="step-label">Ready</p>
+            <h2 id="status-title">Configure your search</h2>
+            <p id="status-message">Choose a set and objective, then start a local composition search.</p>
+          </div>
+          <div id="status-time" class="status-time">—</div>
+        </div>
+
+        <section class="results-panel">
+          <div class="results-heading">
+            <div>
+              <p class="step-label">02 · Explore</p>
+              <h2>Candidate compositions</h2>
+              <p id="result-summary" class="result-summary">No calculation has run yet.</p>
+            </div>
+            <label class="search-box" for="result-filter">
+              <span aria-hidden="true">⌕</span>
+              <input id="result-filter" type="search" placeholder="Filter this page" disabled>
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th scope="col">#</th><th scope="col">Champions</th><th scope="col">Traits</th><th scope="col">Tiers</th></tr>
+              </thead>
+              <tbody id="result-body">
+                <tr class="empty-row"><td colspan="4">Results will appear here after a build.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <button id="previous-page" class="secondary-button" type="button" disabled>← Previous</button>
+            <span id="page-label">Page —</span>
+            <button id="next-page" class="secondary-button" type="button" disabled>Next →</button>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

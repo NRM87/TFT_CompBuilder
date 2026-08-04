@@ -6,6 +6,7 @@
 #include <vector>
 #include <filesystem>
 #include <algorithm>
+#include <cctype>
 #include <unordered_set>
 #include "json.hpp"
 using namespace std;
@@ -40,7 +41,9 @@ namespace {
 		string traitName = token;
 		int traitValue = 1;
 		size_t valueSeparator = token.rfind(':');
-		if (valueSeparator != string::npos) {
+		bool hasNumericValue = valueSeparator != string::npos && valueSeparator + 1 < token.size() &&
+			all_of(token.begin() + valueSeparator + 1, token.end(), [](unsigned char character) { return isdigit(character) != 0; });
+		if (hasNumericValue) {
 			traitName = token.substr(0, valueSeparator);
 			if (traitName.empty()) {
 				throw runtime_error("Invalid empty trait name in champion info token \"" + token + "\" for \"" + championName + "\".");

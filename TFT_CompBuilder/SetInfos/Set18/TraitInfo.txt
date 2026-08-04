@@ -17,7 +17,7 @@ Primal 2 4
 Rapidfire 2 3 4 5
 Ravager 2 4 6
 Riftbeast 3 5 7 10
-Rival 1 2
+Rival 1
 Solar 3
 Spellweaver 2 4 6
 Sprykin 3 5 7

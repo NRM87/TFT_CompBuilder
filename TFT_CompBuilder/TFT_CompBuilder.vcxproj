@@ -146,12 +146,15 @@
     <ClCompile Include="AppSource.cpp" />
     <ClCompile Include="Champion.cpp" />
 	<ClCompile Include="CompositionCache.cpp" />
+	<ClCompile Include="LocalWebServer.cpp" />
     <ClCompile Include="TeamComposition.cpp" />
     <ClCompile Include="CompBuilderUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Champion.h" />
 	<ClInclude Include="CompositionCache.h" />
+	<ClInclude Include="LocalWebServer.h" />
+	<ClInclude Include="ThirdParty\cpp-httplib\httplib.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="TeamComposition.h" />
@@ -185,6 +188,10 @@
     <Text Include="SourceInput.txt" />
   </ItemGroup>
   <ItemGroup>
+	<None Include="ThirdParty\cpp-httplib\LICENSE" />
+	<None Include="Web\app.js" />
+	<None Include="Web\index.html" />
+	<None Include="Web\styles.css" />
     <None Include="TFTSetJSONs\set10.json" />
     <None Include="TFTSetsInfo\set8.json" />
   </ItemGroup>

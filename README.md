@@ -8,7 +8,7 @@ TFT Comp Builder finds Teamfight Tactics compositions with strong trait coverage
 - Visual Studio 2022 with the **Desktop development with C++** workload
 - MSVC v143 and a Windows 10 or 11 SDK
 
-The project uses C++20. No external packages need to be downloaded; the JSON library is included in the repository.
+The project uses C++20. No external packages need to be downloaded; the JSON and local HTTP server libraries are included in the repository.
 
 ## Build with Visual Studio
 
@@ -43,6 +43,14 @@ cd .\TFT_CompBuilder
 ..\x64\Release\TFT_CompBuilder.exe
 ```
 
+For the local browser interface, run:
+
+```powershell
+..\x64\Release\TFT_CompBuilder.exe --serve
+```
+
+The program binds only to `127.0.0.1`, serves the frontend from `Web`, and opens `http://127.0.0.1:8765/` in the default browser. Press `Ctrl+C` in the terminal to stop it. Use `--no-open` to leave the browser closed or `--port` to select another local port.
+
 With no options, the program:
 
 - Finds the latest numeric `SetInfos\Set<number>` directory, currently Set 18.
@@ -70,12 +78,33 @@ Usage: TFT_CompBuilder.exe [options]
       --cache-info         Show cache usage and exit
       --cache-prune        Remove stale, invalid, and orphaned cache data, then exit
       --cache-max-mb <n>   With --cache-prune, evict least-recently-used entries to this limit
+      --serve              Start the local web interface and open it in a browser
+      --port <1-65535>     Port for --serve (default: 8765)
+      --no-open            With --serve, do not open the browser automatically
       --interactive        Use the prompt-driven setup flow
   -i, --input <path>       Read interactive answers from a file; implies --interactive
   -h, --help               Show command help
 ```
 
 Trait arguments must match the names in the set's `TraitInfo.txt`. Names containing spaces are normally represented with underscores, such as `Space_Groove`.
+
+## Local web interface
+
+The browser interface provides the normal set, size, gate objective, emblem, connected-only, timeout, refresh, and cache options. Calculations run asynchronously, so the local server remains responsive while the browser polls job status. Results are paged in groups of 100 and can be filtered by champion on the current page. Cache inspection and conservative pruning are available in the same interface.
+
+The current set metadata is still initialized globally by the calculation engine, so the local server deliberately runs one calculation job at a time. Gate tables are no longer global mutable state: cached or newly calculated gates are passed explicitly into composition generation. This makes the gate path safe to reuse from other frontends and removes reliance on process-static gate values.
+
+The local API currently exposes:
+
+```text
+GET  /api/sets
+POST /api/jobs
+GET  /api/jobs/{id}?offset=0&limit=100
+GET  /api/cache
+POST /api/cache/prune
+```
+
+This request/job boundary is intended to remain stable if the frontend is later hosted separately. A public multi-user deployment should isolate calculations in worker processes or first make the remaining set metadata instance-owned.
 
 ## Examples
 

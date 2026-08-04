@@ -40,14 +40,29 @@ public:
 	bool operator==(const TeamComposition& left) const { return this->champions == left.champions; };
 
 	//Static accessors
-	static vector<TeamComposition> generateComps(int compSize, int traitSettings[3], const TeamComposition& seedComp); //returns a list of comps based on a target comp size, settings, and seeded trait state
-	static vector<TeamComposition> generateComps(int compSize, int traitSettings[3]); //returns a list of comps based on a target comp size and settings
-	static vector<TeamComposition> generateComps(int compSize); //calls default settings of generateComps
+	// A gate table is supplied explicitly for gated generation. Ungated and dynamic
+	// generation may omit it because those modes do not read stored gates.
+	static vector<TeamComposition> generateComps(
+		int compSize,
+		int traitSettings[3],
+		const TeamComposition& seedComp,
+		const GateTable* gateTable = nullptr
+	);
+	static vector<TeamComposition> generateComps(
+		int compSize,
+		int traitSettings[3],
+		const GateTable* gateTable = nullptr
+	);
 	static unordered_map<string, vector<string>> getChampGraph() { return championGraph; }; 
-	static void setGateTable(const GateTable& gateTable);
-	static GateTable getGateTable() { return currentGateTable; }
-	static GateTable calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, const TeamComposition& seedComp, bool connectedChampsOnly = false);
-	static GateTable calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, bool connectedChampsOnly = false);
+	static GateTable calculateGateTable(
+		const GateTable& storedGates,
+		bool recalculateFromScratch,
+		int timeoutSeconds,
+		int maxTargetCompSize,
+		int pruningMode,
+		const TeamComposition& seedComp,
+		bool connectedChampsOnly = false
+	);
 
 	//Static mutators
 	//Initializes the static variables based on a trait-traitMilestone map and a name-Champion map
@@ -100,9 +115,6 @@ private:
 	static string champBitPosToStringMap[];
 	static unordered_map<string, short> traitStringToArrPosMap;
 	static string traitArrPosToStringMap[];
-	static GateTable currentGateTable;
-	static bool gateTableInitialized;
-
 	bool addChamp(int champBitPos);
 	static CompSet buildNextCompSet(const CompSet& compSet, int targetCompSize, int iterationCompSize, const int settings[3], int gateBound, int prevTraitValMax, int& currTraitValMax, double& elapsedSeconds, double timeoutSeconds = -1.0, bool* timedOut = nullptr);
 

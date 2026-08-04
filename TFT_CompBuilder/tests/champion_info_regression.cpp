@@ -15,6 +15,18 @@ namespace {
 		return false;
 	}
 
+	template<typename Function>
+	bool expectThrows(const string& context, Function function) {
+		try {
+			function();
+		}
+		catch (const exception&) {
+			return true;
+		}
+		cerr << context << ": expected an exception" << endl;
+		return false;
+	}
+
 	int traitValue(const Champion& champion, const string& trait) {
 		auto it = champion.getTraitMap().find(trait);
 		return it == champion.getTraitMap().end() ? 0 : it->second;
@@ -73,13 +85,19 @@ int main() {
 		GateTable fixtureGates{};
 		fixtureGates.activeTraitGates[1][0] = 3;
 		fixtureGates.activeTraitGates[1][1] = 2;
-		TeamComposition::setGateTable(fixtureGates);
 		int gatedSettings[3] = { 0, 0, 0 };
-		vector<TeamComposition> gatedSizeTwoComps = TeamComposition::generateComps(2, gatedSettings);
+		vector<TeamComposition> gatedSizeTwoComps = TeamComposition::generateComps(2, gatedSettings, &fixtureGates);
 		passed &= expectEqual("width-two unit is pruned at its occupied width", (int)gatedSizeTwoComps.size(), 1);
 		if (!gatedSizeTwoComps.empty()) {
 			passed &= expectEqual("width-two unit bypasses earlier-width gate", gatedSizeTwoComps.front().containsChamp("Test_Unit"), 1);
 		}
+		passed &= expectThrows("gated generation requires explicitly supplied gates", [&] {
+			TeamComposition::generateComps(2, gatedSettings);
+		});
+
+		unordered_map<string, Champion> set8Champions;
+		readChampInfo("SetInfos\\Set8\\ChampionInfo.txt", set8Champions);
+		passed &= expectEqual("legacy colon-containing trait name", traitValue(set8Champions.at("Sett"), "Mecha:PRIME"), 1);
 
 		unordered_map<string, Champion> variantChampions;
 		readChampInfo("tests\\fixtures\\champion_info_variants.txt", variantChampions);
@@ -159,10 +177,18 @@ int main() {
 		passed &= expectEqual("Set 18 Elder Dragon width", elderDragon.getWidth(), 2);
 		passed &= expectEqual("Set 18 Riftbeast contribution", traitValue(elderDragon, "Riftbeast"), 2);
 		passed &= expectEqual("Set 18 Lux interchangeable origin count", (int)set18Champions.at("Lux").getInterchangeableTraits().size(), 9);
+		const Champion& khaZix = set18Champions.at("Kha'Zix");
+		passed &= expectEqual("Set 18 Kha'Zix Rival contribution", traitValue(khaZix, "Rival"), 1);
+		passed &= expectEqual("Set 18 Kha'Zix interchangeable trait count", (int)khaZix.getInterchangeableTraits().size(), 0);
+		passed &= expectEqual("Set 18 Kha'Zix Executioner contribution", traitValue(khaZix, "Executioner"), 1);
+		passed &= expectEqual("Set 18 Kha'Zix Ravager contribution", traitValue(khaZix, "Ravager"), 1);
+		passed &= expectEqual("Set 18 Kha'Zix Spellweaver contribution", traitValue(khaZix, "Spellweaver"), 1);
+		passed &= expectEqual("Set 18 Kha'Zix Rapidfire contribution", traitValue(khaZix, "Rapidfire"), 1);
 		TeamComposition::initializeStatics(set18Traits, set18Champions);
 		vector<TeamComposition> set18SizeOneComps = TeamComposition::generateComps(1, allCompsSettings);
 		passed &= expectEqual("Set 18 one-slot internal composition count", (int)set18SizeOneComps.size(), 72);
 		passed &= expectEqual("Set 18 Lux internal variant count", countGeneratedChampion(set18SizeOneComps, "Lux"), 9);
+		passed &= expectEqual("Set 18 Kha'Zix internal variant count", countGeneratedChampion(set18SizeOneComps, "Kha'Zix"), 1);
 		vector<TeamComposition> set18SizeTwoComps = TeamComposition::generateComps(2, allCompsSettings);
 		passed &= expectEqual("Set 18 Elder Dragon survives width-based generation", containsGeneratedChampion(set18SizeTwoComps, "Elder_Dragon"), 1);
 

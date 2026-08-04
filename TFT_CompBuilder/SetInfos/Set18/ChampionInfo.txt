@@ -24,7 +24,7 @@ Cassiopeia Coven Spellweaver
 Diana Lunar Ravager Vanguard
 Fiddlesticks Flora_Fatalis Defender Spellweaver
 Hecarim Elderwood Vanguard
-Kha'Zix Rival
+Kha'Zix Rival Executioner Ravager Spellweaver Rapidfire
 Kog'Maw Adaptor Invoker
 Krug Riftbeast Brawler
 Mama_Beak Riftbeast Summoner Rapidfire

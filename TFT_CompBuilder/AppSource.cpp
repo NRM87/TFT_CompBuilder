@@ -16,6 +16,7 @@
 #include "Champion.h"
 #include "CompBuilderUtils.h"
 #include "CompositionCache.h"
+#include "LocalWebServer.h"
 #include "TeamComposition.h"
 using namespace std;
 
@@ -40,6 +41,10 @@ namespace {
 		bool showCacheInfo = false;
 		bool pruneCache = false;
 		optional<uintmax_t> cacheMaximumBytes;
+		bool serveWeb = false;
+		int webPort = 8765;
+		bool webPortSpecified = false;
+		bool openBrowser = true;
 		bool interactive = false;
 		bool showHelp = false;
 	};
@@ -164,6 +169,20 @@ namespace {
 				));
 				options.cacheMaximumBytes = megabytes * 1024 * 1024;
 			}
+			else if (argument == "--serve") {
+				options.serveWeb = true;
+			}
+			else if (argument == "--port") {
+				options.webPort = parseIntegerOption(readOptionValue(i, argumentCount, arguments, argument), argument, 1, 65535);
+				options.webPortSpecified = true;
+			}
+			else if (argument.starts_with("--port=")) {
+				options.webPort = parseIntegerOption(argument.substr(7), "--port", 1, 65535);
+				options.webPortSpecified = true;
+			}
+			else if (argument == "--no-open") {
+				options.openBrowser = false;
+			}
 			else if (argument == "--interactive") {
 				options.interactive = true;
 			}
@@ -180,6 +199,12 @@ namespace {
 		}
 		if (options.cacheMaximumBytes.has_value() && !options.pruneCache) {
 			throw runtime_error("--cache-max-mb must be used with --cache-prune.");
+		}
+		if (options.webPortSpecified && !options.serveWeb) {
+			throw runtime_error("--port must be used with --serve.");
+		}
+		if (!options.openBrowser && !options.serveWeb) {
+			throw runtime_error("--no-open must be used with --serve.");
 		}
 		if (options.inputPath.has_value()) options.interactive = true;
 		return options;
@@ -251,6 +276,9 @@ namespace {
 			<< "      --cache-info         Show cache usage and exit.\n"
 			<< "      --cache-prune        Remove stale, invalid, and orphaned cache data, then exit.\n"
 			<< "      --cache-max-mb <n>   With --cache-prune, evict least-recently-used entries to this limit.\n"
+			<< "      --serve              Start the local web interface and open it in a browser.\n"
+			<< "      --port <1-65535>      Port for --serve (default: 8765).\n"
+			<< "      --no-open             With --serve, do not open the browser automatically.\n"
 			<< "      --interactive        Use the legacy prompt-driven setup flow.\n"
 			<< "  -i, --input <path>       Read interactive answers from a file; implies --interactive.\n"
 			<< "  -h, --help               Show this help message.\n\n"
@@ -264,6 +292,10 @@ int main(int argc, char* argv[]) {
 		CommandLineOptions options = parseCommandLine(argc, argv);
 		if (options.showHelp) {
 			printUsage();
+			return 0;
+		}
+		if (options.serveWeb) {
+			runLocalWebServer(options.webPort, "Web", options.openBrowser);
 			return 0;
 		}
 		if (options.pruneCache) {

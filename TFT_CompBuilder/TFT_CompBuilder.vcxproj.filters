@@ -36,6 +36,9 @@
 	<ClCompile Include="CompositionCache.cpp">
 	  <Filter>Source Files</Filter>
 	</ClCompile>
+	<ClCompile Include="LocalWebServer.cpp">
+	  <Filter>Source Files</Filter>
+	</ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Champion.h">
@@ -54,6 +57,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
 	<ClInclude Include="CompositionCache.h">
+	  <Filter>Header Files</Filter>
+	</ClInclude>
+	<ClInclude Include="LocalWebServer.h">
+	  <Filter>Header Files</Filter>
+	</ClInclude>
+	<ClInclude Include="ThirdParty\cpp-httplib\httplib.h">
 	  <Filter>Header Files</Filter>
 	</ClInclude>
   </ItemGroup>
@@ -117,6 +126,10 @@
     <Text Include="Set17TraitInfo.txt" />
   </ItemGroup>
   <ItemGroup>
+	<None Include="ThirdParty\cpp-httplib\LICENSE" />
+	<None Include="Web\app.js" />
+	<None Include="Web\index.html" />
+	<None Include="Web\styles.css" />
     <None Include="TFTSetsInfo\set8.json">
       <Filter>Source Files\TFTSetJSONs</Filter>
     </None>

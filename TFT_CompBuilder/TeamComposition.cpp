@@ -30,7 +30,6 @@ namespace {
 }
 
 bool TeamComposition::initialized = false;
-bool TeamComposition::gateTableInitialized = false;
 ChampSet TeamComposition::dragons = 0;
 ChampSet TeamComposition::scalescorns = 0;
 unordered_map<string, Champion> TeamComposition::globalChampInfoMap;
@@ -47,12 +46,6 @@ short TeamComposition::champWidthByBitPos[128];
 ChampSet TeamComposition::championConnectionsByBitPos[128];
 ChampSet TeamComposition::championIdentityByBitPos[128];
 vector<TeamComposition::TraitDelta> TeamComposition::champTraitDeltasByBitPos[128];
-GateTable TeamComposition::currentGateTable;
-
-void TeamComposition::setGateTable(const GateTable& gateTable) {
-	currentGateTable = gateTable;
-	gateTableInitialized = true;
-}
 
 //Returns the amount of active trait tiers
 int TeamComposition::getActiveTraitTiersTotal() const {
@@ -229,9 +222,16 @@ TeamComposition::CompSet TeamComposition::buildNextCompSet(const CompSet& compSe
 //  All possible comps - {1,0,0}
 //  Use tier gates, not trait gates - {0,1,0}
 //  Use dynamic pruning - {0,2,0}
-vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3], const TeamComposition& seedComp) {
+vector<TeamComposition> TeamComposition::generateComps(
+	int compSize,
+	int settings[3],
+	const TeamComposition& seedComp,
+	const GateTable* gateTable
+) {
 	if (compSize > 10 || compSize < 1) throw runtime_error("generateComps must have parameter compSize between 1 and 10 (inclusive).");
-	if (!settings[0] && settings[1] != 2 && !gateTableInitialized) throw runtime_error("Gate table not initialized.");
+	if (!settings[0] && settings[1] != 2 && gateTable == nullptr) {
+		throw runtime_error("Gated composition generation requires an explicit gate table.");
+	}
 
 	int currCompSize = 0;
 	CompSet compSet; //holds the previous while loop iteration's generated comps
@@ -247,8 +247,8 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 		int gateBound = 0;
 		if (!settings[0] && settings[1] != 2) {
 			gateBound = (settings[1] == 1
-				? currentGateTable.activeTierGates[compSize - 1][currCompSize - 1]
-				: currentGateTable.activeTraitGates[compSize - 1][currCompSize - 1]);
+				? gateTable->activeTierGates[compSize - 1][currCompSize - 1]
+				: gateTable->activeTraitGates[compSize - 1][currCompSize - 1]);
 		}
 		CompSet nextCompSet = buildNextCompSet(compSet, compSize, currCompSize, settings, gateBound, prevTraitValMax, currTraitValMax, elapsedSeconds);
 		prevTraitValMax = currTraitValMax;
@@ -264,20 +264,21 @@ vector<TeamComposition> TeamComposition::generateComps(int compSize, int setting
 	return compList;
 }
 
-vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3]) {
-	return generateComps(compSize, settings, TeamComposition());
+vector<TeamComposition> TeamComposition::generateComps(int compSize, int settings[3], const GateTable* gateTable) {
+	return generateComps(compSize, settings, TeamComposition(), gateTable);
 }
 
-//Calls generateComps with default settings
-vector<TeamComposition> TeamComposition::generateComps(int compSize) {
-	int traitSettings[3] = { 0,0,0 };
-	return generateComps(compSize, traitSettings);
-}
-
-GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, const TeamComposition& seedComp, bool connectedChampsOnly) {
+GateTable TeamComposition::calculateGateTable(
+	const GateTable& storedGates,
+	bool recalculateFromScratch,
+	int timeoutSeconds,
+	int maxTargetCompSize,
+	int pruningMode,
+	const TeamComposition& seedComp,
+	bool connectedChampsOnly
+) {
 	if (!initialized) throw runtime_error("TeamComposition statics not initialized.");
 	if (timeoutSeconds < 1) throw runtime_error("Gate calculation timeout must be at least 1 second.");
-	if (!recalculateFromScratch && !gateTableInitialized) throw runtime_error("Gate table not initialized.");
 	if (maxTargetCompSize < 1 || maxTargetCompSize > MAX_COMP_SIZE) {
 		throw runtime_error("Gate calculation target size must be between 1 and " + to_string(MAX_COMP_SIZE) + ".");
 	}
@@ -285,7 +286,7 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 		throw runtime_error("Gate calculation pruning mode must be 0 (trait gates) or 1 (tier gates).");
 	}
 
-	GateTable calculatedGates = gateTableInitialized ? currentGateTable : GateTable{};
+	GateTable calculatedGates = storedGates;
 
 	int targetCompSize = maxTargetCompSize;
 	{
@@ -310,8 +311,8 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 			}
 			else {
 				gateBound = max(0, pruningMode == 1
-					? currentGateTable.activeTierGates[targetCompSize - 1][iterationCompSize - 1]
-					: currentGateTable.activeTraitGates[targetCompSize - 1][iterationCompSize - 1]);
+					? storedGates.activeTierGates[targetCompSize - 1][iterationCompSize - 1]
+					: storedGates.activeTraitGates[targetCompSize - 1][iterationCompSize - 1]);
 			}
 			gateBound = max(gateBound, minimumGateBound);
 			int highestSlowBound = -1;
@@ -474,12 +475,7 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 		}
 	}
 
-	setGateTable(calculatedGates);
 	return calculatedGates;
-}
-
-GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int timeoutSeconds, int maxTargetCompSize, int pruningMode, bool connectedChampsOnly) {
-	return calculateGateTable(recalculateFromScratch, timeoutSeconds, maxTargetCompSize, pruningMode, TeamComposition(), connectedChampsOnly);
 }
 
 //Properly initializes static fields. Specifically:
@@ -488,8 +484,6 @@ GateTable TeamComposition::calculateGateTable(bool recalculateFromScratch, int t
 //Initializes champStringTo64BitMap, champ64BitToStringMap, traitStringToShortMap, and traitShortToStringMap with correct string-position pairs
 void TeamComposition::initializeStatics(unordered_map<string, vector<int>> traitData, unordered_map<string, Champion> champInfo) {
 	initialized = false;
-	gateTableInitialized = false;
-	currentGateTable = GateTable{};
 	currentSetTraits = traitData;
 	globalChampInfoMap = champInfo;
 

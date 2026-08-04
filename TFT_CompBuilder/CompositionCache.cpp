@@ -680,8 +680,8 @@ namespace {
 		const GatedCompositionRequest& request,
 		const TeamComposition& seedComposition
 	) {
-		TeamComposition::setGateTable(GateTable{});
-		TeamComposition::calculateGateTable(
+		GateTable calculatedGates = TeamComposition::calculateGateTable(
+			GateTable{},
 			true,
 			request.gateTimeoutSeconds,
 			request.compositionSize,
@@ -691,7 +691,7 @@ namespace {
 		);
 		int settings[3] = { 0, request.gateType == GateType::ActiveTraitTiers ? 1 : 0, request.connectedChampsOnly ? 1 : 0 };
 		return {
-			TeamComposition::generateComps(request.compositionSize, settings, seedComposition),
+			TeamComposition::generateComps(request.compositionSize, settings, seedComposition, &calculatedGates),
 			CompositionResolution::CalculatedGates
 		};
 	}
@@ -892,9 +892,13 @@ GatedCompositionResult getOrCalculateGatedCompositions(const GatedCompositionReq
 	optional<CachedGateRecord> cachedGates;
 	if (!request.refreshCache) cachedGates = readGateCache(request, *keys);
 	if (cachedGates.has_value() && cachedGates->record.calculatedSizes[request.compositionSize - 1]) {
-		TeamComposition::setGateTable(cachedGates->record.table);
 		int settings[3] = { 0, request.gateType == GateType::ActiveTraitTiers ? 1 : 0, request.connectedChampsOnly ? 1 : 0 };
-		vector<TeamComposition> compositions = TeamComposition::generateComps(request.compositionSize, settings, seedComposition);
+		vector<TeamComposition> compositions = TeamComposition::generateComps(
+			request.compositionSize,
+			settings,
+			seedComposition,
+			&cachedGates->record.table
+		);
 		string rowFingerprint = gateRowFingerprint(cachedGates->record.table, request.gateType, request.compositionSize);
 		try {
 			writeCompositionCache(request, *keys, rowFingerprint, cachedGates->objectHash, compositions);
@@ -906,8 +910,8 @@ GatedCompositionResult getOrCalculateGatedCompositions(const GatedCompositionReq
 	}
 
 	GateCacheRecord updatedGates = cachedGates.has_value() ? cachedGates->record : GateCacheRecord{};
-	TeamComposition::setGateTable(updatedGates.table);
 	GateTable calculatedTable = TeamComposition::calculateGateTable(
+		updatedGates.table,
 		true,
 		request.gateTimeoutSeconds,
 		request.compositionSize,
@@ -927,7 +931,12 @@ GatedCompositionResult getOrCalculateGatedCompositions(const GatedCompositionReq
 	}
 
 	int settings[3] = { 0, request.gateType == GateType::ActiveTraitTiers ? 1 : 0, request.connectedChampsOnly ? 1 : 0 };
-	vector<TeamComposition> compositions = TeamComposition::generateComps(request.compositionSize, settings, seedComposition);
+	vector<TeamComposition> compositions = TeamComposition::generateComps(
+		request.compositionSize,
+		settings,
+		seedComposition,
+		&calculatedTable
+	);
 	string rowFingerprint = gateRowFingerprint(calculatedTable, request.gateType, request.compositionSize);
 	try {
 		writeCompositionCache(request, *keys, rowFingerprint, gateObjectHash, compositions);
